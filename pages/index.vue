@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useDevicesList, useUserMedia } from '@vueuse/core';
 import { $fetch } from 'ofetch';
 import { QrcodeStream } from 'vue-qrcode-reader';
 
@@ -22,7 +23,24 @@ const onDetect = (detectedCodes) => {
   }
 };
 
-const paintOutline = (detectedCodes, ctx) => {
+const currentCamera = ref<string>();
+const { videoInputs: cameras } = useDevicesList({
+  requestPermissions: true,
+  onUpdated() {
+    if (!cameras.value.find((i) => i.deviceId === currentCamera.value)) currentCamera.value = cameras.value[0]?.deviceId;
+  },
+});
+
+const video = ref<HTMLVideoElement>();
+const { stream, enabled } = useUserMedia({
+  constraints: reactive({ video: { deviceId: currentCamera } }),
+});
+
+watchEffect(() => {
+  if (video.value) video.value.srcObject = stream.value!;
+});
+
+/*const paintOutline = (detectedCodes, ctx) => {
   for (const detectedCode of detectedCodes) {
     const [firstPoint, ...otherPoints] = detectedCode.cornerPoints;
 
@@ -37,16 +55,38 @@ const paintOutline = (detectedCodes, ctx) => {
     ctx.closePath();
     ctx.stroke();
   }
-};
+};*/
 </script>
 
 <template>
   <div class="m-4">
     <ClientOnly>
       <div class="mx-auto size-[50vw]">
-        <qrcode-stream :formats="['ean_13']" :track="paintOutline" @detect="onDetect" />
+        <qrcode-stream :formats="['ean_13']" @detect="onDetect" />
       </div>
     </ClientOnly>
+    <div class="flex flex-col gap-4 text-center">
+      <div>
+        <button @click="enabled = !enabled">
+          {{ enabled ? 'Stop' : 'Start' }}
+        </button>
+      </div>
+
+      <div>
+        <div
+          v-for="camera of cameras"
+          :key="camera.deviceId"
+          class="px-2 py-1 cursor-pointer"
+          :class="{ 'text-primary': currentCamera === camera.deviceId }"
+          @click="currentCamera = camera.deviceId"
+        >
+          {{ camera.label }}
+        </div>
+      </div>
+      <div>
+        <video ref="video" muted autoplay controls class="h-100 w-auto" />
+      </div>
+    </div>
     <p class="decode-result">
       Last result: <b>{{ result }}</b>
     </p>
