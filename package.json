@@ -15,6 +15,7 @@
     "@nuxt/ui": "^2.19.2",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "nuxt": "^3.14.1592",
+    "nuxt-mongoose": "1.0.6",
     "prettier": "^3.4.1",
     "prettier-plugin-tailwindcss": "^0.6.9",
     "vite-plugin-eslint2": "^5.0.3"

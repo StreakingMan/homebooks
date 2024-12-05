@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   devServer: {
     port: 4000,
   },
-  modules: ['@nuxt/ui', '@nuxt/eslint'],
+  modules: ['@nuxt/ui', '@nuxt/eslint', 'nuxt-mongoose'],
 
   eslint: {
     checker: true,

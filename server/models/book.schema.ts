@@ -1,0 +1,50 @@
+import { defineMongooseModel } from '#nuxt/mongoose';
+
+// const mock = {
+//   title: 'Python数据可视化',
+//   img: 'http://static.tanshuapi.com/isbn/202210/16466262306af163.jpg',
+//   author: '黑马程序员 著',
+//   isbn: '9787115545138',
+//   isbn10: '7115545138',
+//   publisher: '人民邮电出版社',
+//   pubdate: '2021-04-01',
+//   pubplace: '',
+//   keyword: '高职高专教材 计算机 教材',
+//   cip: '',
+//   pages: '220',
+//   price: '49.80',
+//   binding: '平装',
+//   edition: '',
+//   impression: '',
+//   language: '',
+//   format: '16开',
+//   class: '',
+//   summary:
+//     '本书采用理论与实例相结合的形式，以Anaconda 3为主要开发工具，全面地介绍了Python数据可视化的相关知识。全书共分为9章，第1章介绍数据可视化与matplotlib的入门知识；第2～8章全面地介绍matplotlib的核心知识，包括使用matplotlib绘制简单图表、图表辅助元素的定制、图表样式的美化、子图的绘制及坐标轴共享、坐标轴的定制、绘制3D图表和统计地图、使用matplotlib绘制高级图表；第9章介绍pyecharts的基础知识。除了第1章，其他章都配有丰富的实例，读者可以边学边练习，巩固所学知识，并在实践中提升实际开发能力。本书既可作为高等教育本、专科院校计算机相关专业的教材，也可作为数据可视化技术爱好者的入门书籍。',
+// };
+
+export const BookSchema = defineMongooseModel({
+  name: 'Book',
+  schema: {
+    title: String,
+    img: String,
+    author: String,
+    isbn: String,
+    isbn10: String,
+    publisher: String,
+    pubdate: String,
+    pubplace: String,
+    keyword: String,
+    cip: String,
+    pages: String,
+    price: String,
+    binding: String,
+    edition: String,
+    impression: String,
+    language: String,
+    format: String,
+    class: String,
+    summary: String,
+    isDeleted: { type: Boolean, required: false, select: false },
+  },
+});
