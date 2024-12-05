@@ -2,6 +2,8 @@
 export default defineNuxtConfig({
   devtools: { enabled: true },
   devServer: {
+    host: '0.0.0.0',
+    https: true,
     port: 4000,
   },
   modules: ['@nuxt/ui', '@nuxt/eslint', 'nuxt-mongoose'],

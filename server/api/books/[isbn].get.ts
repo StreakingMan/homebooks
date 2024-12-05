@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     if (code !== 1) {
       throw createError({
         statusCode: 404,
-        statusMessage: msg,
+        message: msg,
       });
     } else {
       const book = new BookSchema(data);
