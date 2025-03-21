@@ -84,6 +84,29 @@
         </div>
       </section>
 
+      <!-- HA控制区域 -->
+      <section class="mb-20">
+        <div class="backdrop-blur-2xl bg-white/70 dark:bg-[#1C1C1E]/70 rounded-3xl p-8 shadow-sm hover:shadow-lg transition-all duration-300">
+          <h2 class="text-2xl font-bold text-[#1D1D1F] dark:text-white mb-6">智能家居控制</h2>
+          <div class="flex items-center justify-center">
+            <button
+              @click="toggleLED"
+              class="px-8 py-4 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 text-base font-medium flex items-center"
+              :class="{
+                'bg-[#34C759] dark:bg-[#32D74B] text-white': isOn,
+                'bg-[#007AFF] dark:bg-[#0A84FF] text-white': !isOn
+              }"
+            >
+              <i class="mdi text-xl mr-2" :class="{
+                'mdi-lightbulb-on': isOn,
+                'mdi-lightbulb-off': !isOn
+              }"/>
+              {{ isOn ? '关闭' : '打开' }}LED灯
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- 书墙区域 -->
       <section>
         <div v-if="pending" class="flex justify-center items-center py-20">
@@ -330,6 +353,7 @@ onMounted(() => {
   
   // 监听窗口大小变化
   window.addEventListener('resize', checkMobile)
+  getLEDStatus()
 })
 
 onUnmounted(() => {
@@ -362,6 +386,40 @@ const selectedBook = ref<Book | null>(null)
 
 // 摄像头测试相关
 const showCameraTest = ref(false)
+
+// HA控制相关
+const isOn = ref(false)
+
+// 获取LED状态
+async function getLEDStatus() {
+  try {
+    const response = await $fetch('/api/led/status')
+    if (response.success) {
+      isOn.value = response.isOn
+    }
+  } catch (error) {
+    console.error('获取状态失败:', error)
+  }
+}
+
+// 控制LED开关
+async function toggleLED() {
+  try {
+    const response = await $fetch('/api/led/toggle', {
+      method: 'POST',
+      body: {
+        action: isOn.value ? 'turn_off' : 'turn_on'
+      }
+    })
+    
+    if (response.success) {
+      isOn.value = !isOn.value
+    }
+  } catch (error) {
+    console.error('控制失败:', error)
+    alert('控制失败，请检查配置')
+  }
+}
 </script>
 
 <style scoped>

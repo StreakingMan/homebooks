@@ -21,6 +21,10 @@ export default defineNuxtConfig({
     fallback: 'light', // 默认使用浅色模式
     preference: 'system', // 优先使用系统设置
     dataValue: 'theme', // 主题数据属性名
-    storageKey: 'book-wall-theme' // localStorage 存储键名
+    storageKey: 'book-wall-theme', // localStorage 存储键名
+  },
+
+  ui: {
+    fonts: false,
   },
 });
