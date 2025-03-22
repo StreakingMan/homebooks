@@ -6,6 +6,7 @@
         <h3 class="text-base font-medium text-gray-900 dark:text-white">调试日志</h3>
         <div class="flex items-center space-x-3">
           <button
+            v-if="mode === 'camera'"
             type="button"
             @click="retryCamera"
             class="text-sm px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:opacity-90 transition-opacity duration-300"
@@ -36,7 +37,8 @@
       </div>
     </div>
 
-    <div class="scanner-container relative">
+    <!-- 摄像头扫描区域 -->
+    <div v-if="mode === 'camera'" class="scanner-container relative">
       <div v-if="!cameraError" class="video-container">
         <video 
           ref="videoRef"
@@ -86,6 +88,28 @@
       </div>
     </div>
 
+    <!-- 扫码枪输入区域 -->
+    <div v-else class="relative group">
+      <div class="w-full px-6 py-4 backdrop-blur-2xl bg-white/70 dark:bg-[#1C1C1E]/70 rounded-2xl shadow-sm group-hover:shadow-lg transition-all duration-300 text-[#1D1D1F] dark:text-white text-base">
+        <div class="flex items-center justify-between">
+          <span class="text-[#86868B]">等待扫码枪输入...</span>
+          <i class="mdi mdi-barcode-scan text-xl text-[#86868B]"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- 扫码状态提示 -->
+    <div v-if="scanning" class="mt-4 flex items-center justify-center text-[#007AFF] dark:text-[#0A84FF]">
+      <div class="w-5 h-5 border-2 border-[#007AFF]/20 dark:border-[#0A84FF]/20 border-t-[#007AFF] dark:border-t-[#0A84FF] rounded-full animate-spin mr-2"/>
+      正在获取书籍信息...
+    </div>
+
+    <!-- 批量扫描提示 -->
+    <div class="mt-4 text-center text-sm text-[#86868B] dark:text-[#86868B]">
+      <p>已扫描 {{ scannedBooks.length }} 本</p>
+      <p class="mt-1">继续扫描下一本，或点击完成按钮结束</p>
+    </div>
+
     <!-- 预览区域 -->
     <div
       v-if="previewBook"
@@ -126,13 +150,13 @@
         <h3 class="text-base font-medium text-gray-900 dark:text-white">已扫描书籍</h3>
         <span class="text-sm text-gray-500 dark:text-gray-400">共 {{ scannedBooks.length }} 本</span>
       </div>
-      <div class="space-y-4">
+      <div class="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
         <div
           v-for="book in scannedBooks"
           :key="book.isbn"
-          class="backdrop-blur-xl bg-white/90 dark:bg-black/90 rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all duration-300 flex items-center space-x-4"
+          class="flex-shrink-0 w-24 backdrop-blur-xl bg-white/90 dark:bg-black/90 rounded-2xl p-2 shadow-sm hover:shadow-lg transition-all duration-300"
         >
-          <div class="w-16 h-24 flex-shrink-0">
+          <div class="aspect-[2/3] relative">
             <img
               v-if="book.img"
               :src="book.img"
@@ -145,17 +169,6 @@
             >
               <span class="text-gray-400 dark:text-gray-500 text-xs">无图片</span>
             </div>
-          </div>
-          <div class="flex-1 min-w-0">
-            <h4 class="text-base font-medium text-gray-900 dark:text-white truncate">
-              {{ book.title }}
-            </h4>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 truncate">
-              {{ book.author }}
-            </p>
-            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-              {{ book.isbn }}
-            </p>
           </div>
         </div>
       </div>
@@ -483,16 +496,31 @@ function stopCamera() {
   }
 }
 
+// 定义组件属性
+const props = defineProps<{
+  mode: 'camera' | 'barcode'
+}>()
+
 // 组件挂载时初始化
 onMounted(() => {
-  addLog('组件已挂载，准备初始化摄像头...', 'info')
-  initCamera()
+  addLog('组件已挂载，准备初始化...', 'info')
+  if (props.mode === 'camera') {
+    initCamera()
+  } else {
+    // 添加键盘事件监听
+    window.addEventListener('keydown', handleKeydown)
+  }
 })
 
 // 组件卸载时清理
 onUnmounted(() => {
   addLog('组件正在卸载...', 'info')
-  stopCamera()
+  if (props.mode === 'camera') {
+    stopCamera()
+  } else {
+    // 移除键盘事件监听
+    window.removeEventListener('keydown', handleKeydown)
+  }
   // 清除缓存
   scannedISBNs.clear()
   pendingISBNs.clear()
@@ -502,6 +530,124 @@ onUnmounted(() => {
   if (window.gc) {
     window.gc()
   }
+})
+
+// 移除输入框相关的变量
+const scanInputRef = ref<HTMLInputElement | null>(null)
+
+// 添加缺失的变量
+const scanning = ref(false)
+
+// 添加扫码枪监听相关的变量
+let scanBuffer = ''
+let scanTimeout: number | null = null
+const SCAN_TIMEOUT = 100 // 扫码超时时间（毫秒）
+
+// 处理键盘事件
+function handleKeydown(event: KeyboardEvent) {
+  // 忽略输入框的输入
+  if (event.target instanceof HTMLInputElement) {
+    return
+  }
+
+  // 如果是回车键，处理扫码结果
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    if (scanTimeout) {
+      window.clearTimeout(scanTimeout)
+      scanTimeout = null
+    }
+    handleScan(scanBuffer)
+    scanBuffer = ''
+  } else {
+    // 将按键添加到缓冲区
+    scanBuffer += event.key
+    // 重置超时计时器
+    if (scanTimeout) {
+      window.clearTimeout(scanTimeout)
+    }
+    scanTimeout = window.setTimeout(() => {
+      scanBuffer = ''
+    }, SCAN_TIMEOUT)
+  }
+}
+
+// 修改处理扫码的函数
+async function handleScan(isbn: string) {
+  if (!isbn) return
+
+  // 检查是否是有效的ISBN码
+  const cleanIsbn = isbn.replace(/[^0-9X]/gi, '')
+  if (cleanIsbn.length !== 10 && cleanIsbn.length !== 13) {
+    addLog('无效的ISBN码', 'error')
+    return
+  }
+
+  // 检查扫描冷却时间
+  const now = Date.now()
+  if (now - lastScannedTime.value < scanCooldown) {
+    return
+  }
+  
+  // 检查是否正在请求中
+  if (pendingISBNs.has(cleanIsbn)) {
+    addLog('该ISBN正在处理中...', 'warning')
+    return
+  }
+  
+  // 检查是否已经扫描过
+  if (scannedISBNs.has(cleanIsbn)) {
+    addLog('该ISBN已扫描过', 'warning')
+    return
+  }
+
+  scanning.value = true
+  addLog(`识别到ISBN：${cleanIsbn}`, 'success')
+  scanStatus.value = '已识别ISBN：' + cleanIsbn
+  loading.value = true
+  loadingMessage.value = '正在获取图书信息...'
+  
+  // 添加到正在请求的集合中
+  pendingISBNs.add(cleanIsbn)
+  
+  try {
+    addLog('正在获取图书信息...', 'info')
+    const response = await fetch(`/api/books/${cleanIsbn}`)
+    const data = await response.json()
+    
+    if (!response.ok) {
+      throw new Error(data.message || '获取图书信息失败')
+    }
+    
+    console.log('Book data received:', data)
+    previewBook.value = data
+    // 添加到已扫描列表
+    scannedBooks.value.unshift(data)
+    scanStatus.value = '扫描成功！'
+    addLog(`获取成功：《${data.title}》`, 'success')
+    
+    // 更新扫描时间戳和缓存
+    lastScannedTime.value = now
+    scannedISBNs.add(cleanIsbn)
+    emit('scan-success', data)
+  } catch (error: unknown) {
+    console.error('API error:', error)
+    const e = error as Error
+    errorMsg.value = e.message
+    scanStatus.value = ''
+    previewBook.value = null
+    addLog(e.message, 'error')
+    emit('scan-error', errorMsg.value)
+  } finally {
+    loading.value = false
+    // 从正在请求的集合中移除
+    pendingISBNs.delete(cleanIsbn)
+  }
+}
+
+// 组件挂载时自动聚焦输入框
+onMounted(() => {
+  scanInputRef.value?.focus()
 })
 </script>
 
@@ -712,5 +858,31 @@ video {
   .preview-container {
     padding: 1rem;
   }
+}
+
+/* 添加滚动条样式 */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.dark .overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dark .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 </style> 

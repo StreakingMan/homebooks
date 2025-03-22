@@ -36,15 +36,15 @@
               @click="showScanner = true"
               class="flex-1 flex items-center justify-center px-6 py-4 bg-[#007AFF] dark:bg-[#0A84FF] text-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 text-base font-medium"
             >
-              <i class="mdi mdi-qrcode-scan text-xl mr-2 group-hover:scale-110 transition-transform"/>
-              扫码添加新书
+              <i class="mdi mdi-barcode-scan text-xl mr-2 group-hover:scale-110 transition-transform"/>
+              扫码枪录入
             </button>
             <button
-              @click="showCameraTest = true"
+              @click="showCameraScanner = true"
               class="flex-1 flex items-center justify-center px-6 py-4 bg-[#34C759] dark:bg-[#32D74B] text-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 text-base font-medium"
             >
               <i class="mdi mdi-camera text-xl mr-2 group-hover:scale-110 transition-transform"/>
-              测试摄像头
+              摄像头扫描
             </button>
           </div>
         </div>
@@ -166,15 +166,27 @@
       >
         <div class="w-full max-w-2xl backdrop-blur-2xl bg-white/90 dark:bg-[#1C1C1E]/90 rounded-3xl p-6 shadow-xl">
           <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-medium text-[#1D1D1F] dark:text-white">扫描书籍二维码</h3>
-            <button
-              @click="showScanner = false"
-              class="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
-            >
-              <i class="mdi mdi-close text-xl text-[#86868B]"/>
-            </button>
+            <div class="flex items-center space-x-4">
+              <h3 class="text-xl font-medium text-[#1D1D1F] dark:text-white">扫码枪录入</h3>
+              <span class="text-sm text-[#86868B] dark:text-[#86868B]">已扫描 {{ scannedCount }} 本</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <button
+                @click="handleBatchComplete"
+                class="px-4 py-2 bg-[#34C759] text-white rounded-full text-sm hover:opacity-90 transition-opacity"
+              >
+                完成
+              </button>
+              <button
+                @click="showScanner = false"
+                class="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
+              >
+                <i class="mdi mdi-close text-xl text-[#86868B]"/>
+              </button>
+            </div>
           </div>
           <BookScanner
+            mode="barcode"
             @scan-success="handleScanSuccess"
             @scan-error="handleScanError"
           />
@@ -246,23 +258,38 @@
       </div>
     </Teleport>
 
-    <!-- iOS 风格摄像头测试弹窗 -->
+    <!-- iOS 风格摄像头扫描弹窗 -->
     <Teleport to="body">
       <div
-        v-if="showCameraTest"
+        v-if="showCameraScanner"
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-lg"
       >
         <div class="w-full max-w-2xl backdrop-blur-2xl bg-white/90 dark:bg-[#1C1C1E]/90 rounded-3xl p-6 shadow-xl">
           <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-medium text-[#1D1D1F] dark:text-white">测试摄像头</h3>
-            <button
-              @click="showCameraTest = false"
-              class="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
-            >
-              <i class="mdi mdi-close text-xl text-[#86868B]"/>
-            </button>
+            <div class="flex items-center space-x-4">
+              <h3 class="text-xl font-medium text-[#1D1D1F] dark:text-white">摄像头扫描</h3>
+              <span class="text-sm text-[#86868B] dark:text-[#86868B]">已扫描 {{ scannedCount }} 本</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <button
+                @click="handleBatchComplete"
+                class="px-4 py-2 bg-[#34C759] text-white rounded-full text-sm hover:opacity-90 transition-opacity"
+              >
+                完成
+              </button>
+              <button
+                @click="showCameraScanner = false"
+                class="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
+              >
+                <i class="mdi mdi-close text-xl text-[#86868B]"/>
+              </button>
+            </div>
           </div>
-          <CameraTest />
+          <BookScanner
+            mode="camera"
+            @scan-success="handleScanSuccess"
+            @scan-error="handleScanError"
+          />
         </div>
       </div>
     </Teleport>
@@ -271,7 +298,7 @@
 
 <script setup lang="ts">
 import '@mdi/font/css/materialdesignicons.css'
-import CameraTest from '~/components/CameraTest.vue'
+import BookScanner from '~/components/BookScanner.vue'
 
 interface Book {
   title: string;
@@ -330,17 +357,27 @@ const toggleColorMode = () => {
 
 // 扫码相关
 const showScanner = ref(false)
+const showCameraScanner = ref(false)
+const scannedCount = ref(0)
 
 // 处理扫码成功
-const handleScanSuccess = async (_bookData: Book) => {
+const handleScanSuccess = async (_book: Book) => {
+  // 更新扫描计数
+  scannedCount.value++
   // 重新获取书籍列表
   books.value = await $fetch('/api/books')
 }
 
 // 处理扫码错误
 const handleScanError = (error: string) => {
-  // 可以添加错误提示
-  console.error('扫码错误:', error)
+  alert(error)
+}
+
+// 处理批量完成
+const handleBatchComplete = () => {
+  showScanner.value = false
+  showCameraScanner.value = false
+  scannedCount.value = 0
 }
 
 // 检测是否为移动设备
@@ -383,9 +420,6 @@ const toggleBookInfo = (event: MouseEvent) => {
 
 // 选中的书籍（用于显示详情）
 const selectedBook = ref<Book | null>(null)
-
-// 摄像头测试相关
-const showCameraTest = ref(false)
 
 // HA控制相关
 const isOn = ref(false)
