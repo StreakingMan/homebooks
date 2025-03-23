@@ -6,13 +6,13 @@
     </div>
 
     <!-- 内容区域 -->
-    <div class="relative z-10 container mx-auto px-6 py-16 max-w-5xl">
+    <div class="relative z-10 container mx-auto px-6 py-8 max-w-6xl">
       <!-- 头部区域 -->
-      <header class="text-center mb-12">
-        <h1 class="text-6xl md:text-7xl font-bold tracking-tight text-[#1D1D1F] dark:text-white mb-6">
+      <header class="text-center mb-8">
+        <h1 class="text-5xl md:text-6xl font-bold tracking-tight text-[#1D1D1F] dark:text-white mb-4">
           我的书墙
         </h1>
-        <p class="text-xl md:text-2xl text-[#86868B] dark:text-[#86868B] font-normal max-w-2xl mx-auto leading-relaxed mb-12">
+        <p class="text-lg md:text-xl text-[#86868B] dark:text-[#86868B] font-normal max-w-2xl mx-auto leading-relaxed mb-8">
           记录阅读足迹，分享知识力量
         </p>
 
@@ -33,15 +33,15 @@
           <!-- iOS 风格扫码按钮 -->
           <div class="flex gap-4">
             <button
-              @click="showScanner = true"
               class="flex-1 flex items-center justify-center px-6 py-4 bg-[#007AFF] dark:bg-[#0A84FF] text-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 text-base font-medium"
+              @click="showScanner = true"
             >
               <i class="mdi mdi-barcode-scan text-xl mr-2 group-hover:scale-110 transition-transform"/>
               扫码枪录入
             </button>
             <button
-              @click="showCameraScanner = true"
               class="flex-1 flex items-center justify-center px-6 py-4 bg-[#34C759] dark:bg-[#32D74B] text-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 text-base font-medium"
+              @click="showCameraScanner = true"
             >
               <i class="mdi mdi-camera text-xl mr-2 group-hover:scale-110 transition-transform"/>
               摄像头扫描
@@ -60,52 +60,50 @@
         </button>
       </header>
 
-      <!-- 统计信息区域 -->
-      <section class="mb-20">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div class="backdrop-blur-2xl bg-white/70 dark:bg-[#1C1C1E]/70 rounded-3xl p-8 shadow-sm hover:shadow-lg transition-all duration-300">
-            <div class="text-5xl md:text-6xl font-bold text-[#007AFF] dark:text-[#0A84FF] mb-3">
-              {{ books?.length || 0 }}
-            </div>
-            <div class="text-base text-[#86868B] dark:text-[#86868B] font-medium">总藏书量</div>
+      <!-- 统计信息和HA控制区域 -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <!-- 统计信息卡片 -->
+        <div class="backdrop-blur-2xl bg-white/70 dark:bg-[#1C1C1E]/70 rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all duration-300">
+          <div class="text-3xl md:text-4xl font-bold text-[#007AFF] dark:text-[#0A84FF] mb-2">
+            {{ books?.length || 0 }}
           </div>
-          <div class="backdrop-blur-2xl bg-white/70 dark:bg-[#1C1C1E]/70 rounded-3xl p-8 shadow-sm hover:shadow-lg transition-all duration-300">
-            <div class="text-5xl md:text-6xl font-bold text-[#34C759] dark:text-[#32D74B] mb-3">
-              {{ getNewBooksCount() }}
-            </div>
-            <div class="text-base text-[#86868B] dark:text-[#86868B] font-medium">本月新增</div>
-          </div>
-          <div class="backdrop-blur-2xl bg-white/70 dark:bg-[#1C1C1E]/70 rounded-3xl p-8 shadow-sm hover:shadow-lg transition-all duration-300">
-            <div class="text-5xl md:text-6xl font-bold text-[#FF9F0A] dark:text-[#FFD60A] mb-3">
-              {{ books?.length || 0 }}
-            </div>
-            <div class="text-base text-[#86868B] dark:text-[#86868B] font-medium">待读书籍</div>
-          </div>
+          <div class="text-sm text-[#86868B] dark:text-[#86868B] font-medium">总藏书量</div>
         </div>
-      </section>
-
-      <!-- HA控制区域 -->
-      <section class="mb-20">
-        <div class="backdrop-blur-2xl bg-white/70 dark:bg-[#1C1C1E]/70 rounded-3xl p-8 shadow-sm hover:shadow-lg transition-all duration-300">
-          <h2 class="text-2xl font-bold text-[#1D1D1F] dark:text-white mb-6">智能家居控制</h2>
-          <div class="flex items-center justify-center">
+        <div class="backdrop-blur-2xl bg-white/70 dark:bg-[#1C1C1E]/70 rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all duration-300">
+          <div class="text-3xl md:text-4xl font-bold text-[#34C759] dark:text-[#32D74B] mb-2">
+            {{ getNewBooksCount() }}
+          </div>
+          <div class="text-sm text-[#86868B] dark:text-[#86868B] font-medium">本月新增</div>
+        </div>
+        <div class="backdrop-blur-2xl bg-white/70 dark:bg-[#1C1C1E]/70 rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all duration-300">
+          <div class="text-3xl md:text-4xl font-bold text-[#FF9F0A] dark:text-[#FFD60A] mb-2">
+            {{ books?.length || 0 }}
+          </div>
+          <div class="text-sm text-[#86868B] dark:text-[#86868B] font-medium">待读书籍</div>
+        </div>
+        
+        <!-- HA控制卡片 -->
+        <div class="backdrop-blur-2xl bg-white/70 dark:bg-[#1C1C1E]/70 rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all duration-300">
+          <div class="flex items-center justify-between h-full">
+            <h2 class="text-sm font-medium text-[#1D1D1F] dark:text-white">智能家居</h2>
             <button
-              @click="toggleLED"
-              class="px-8 py-4 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 text-base font-medium flex items-center"
+              class="px-4 py-2 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 text-sm font-medium flex items-center"
               :class="{
                 'bg-[#34C759] dark:bg-[#32D74B] text-white': isOn,
                 'bg-[#007AFF] dark:bg-[#0A84FF] text-white': !isOn
               }"
+              @click="toggleLED"
             >
-              <i class="mdi text-xl mr-2" :class="{
+              <i
+class="mdi text-lg mr-1" :class="{
                 'mdi-lightbulb-on': isOn,
                 'mdi-lightbulb-off': !isOn
               }"/>
-              {{ isOn ? '关闭' : '打开' }}LED灯
+              {{ isOn ? '关闭' : '打开' }}LED
             </button>
           </div>
         </div>
-      </section>
+      </div>
 
       <!-- 书墙区域 -->
       <section>
@@ -172,14 +170,14 @@
             </div>
             <div class="flex items-center space-x-3">
               <button
-                @click="handleBatchComplete"
                 class="px-4 py-2 bg-[#34C759] text-white rounded-full text-sm hover:opacity-90 transition-opacity"
+                @click="handleBatchComplete"
               >
                 完成
               </button>
               <button
-                @click="showScanner = false"
                 class="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
+                @click="showScanner = false"
               >
                 <i class="mdi mdi-close text-xl text-[#86868B]"/>
               </button>
@@ -242,8 +240,8 @@
               </div>
             </div>
             <button
-              @click="selectedBook = null"
               class="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
+              @click="selectedBook = null"
             >
               <i class="mdi mdi-close text-xl text-[#86868B]"/>
             </button>
@@ -272,14 +270,14 @@
             </div>
             <div class="flex items-center space-x-3">
               <button
-                @click="handleBatchComplete"
                 class="px-4 py-2 bg-[#34C759] text-white rounded-full text-sm hover:opacity-90 transition-opacity"
+                @click="handleBatchComplete"
               >
                 完成
               </button>
               <button
-                @click="showCameraScanner = false"
                 class="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
+                @click="showCameraScanner = false"
               >
                 <i class="mdi mdi-close text-xl text-[#86868B]"/>
               </button>
@@ -308,6 +306,11 @@ interface Book {
   publisher: string;
   pubdate: string;
   summary: string;
+}
+
+interface LEDResponse {
+  success: boolean;
+  isOn: boolean;
 }
 
 // 搜索相关
@@ -427,7 +430,7 @@ const isOn = ref(false)
 // 获取LED状态
 async function getLEDStatus() {
   try {
-    const response = await $fetch('/api/led/status')
+    const response = await $fetch<LEDResponse>('/api/led/status')
     if (response.success) {
       isOn.value = response.isOn
     }
@@ -439,14 +442,14 @@ async function getLEDStatus() {
 // 控制LED开关
 async function toggleLED() {
   try {
-    const response = await $fetch('/api/led/toggle', {
+    const { data } = await useFetch<LEDResponse>('/api/led/toggle', {
       method: 'POST',
       body: {
         action: isOn.value ? 'turn_off' : 'turn_on'
       }
     })
     
-    if (response.success) {
+    if (data.value?.success) {
       isOn.value = !isOn.value
     }
   } catch (error) {
