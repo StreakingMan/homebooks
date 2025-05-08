@@ -14,6 +14,7 @@ export default defineEventHandler(async (event) => {
         isbn,
       },
     });
+    console.log('/api/books/[isbn].get', code, data, msg);
     if (code !== 1) {
       throw createError({
         statusCode: 404,
