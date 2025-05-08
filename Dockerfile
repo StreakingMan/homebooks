@@ -2,8 +2,8 @@
 
 FROM node:22-alpine AS build
 
-RUN apk add --no-cache ca-certificates && \
-    update-ca-certificates
+#RUN apk add --no-cache ca-certificates && \
+#    update-ca-certificates
 
 WORKDIR /app
 
