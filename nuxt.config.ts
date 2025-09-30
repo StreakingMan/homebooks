@@ -1,7 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  // 保持 Nuxt 3 时代的根目录作为源码目录，兼容现有结构与 ~ 别名
-  srcDir: '.',
+  // 采用 Nuxt 4 默认 app/ 目录结构
   css: ['~/assets/css/main.css'],
   devtools: { enabled: true },
   devServer: {
