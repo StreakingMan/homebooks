@@ -10,6 +10,7 @@ interface Props {
     [key: string]: any
   }
   class?: string
+  highlighted?: boolean
 }
 
 const props = defineProps<Props>()
@@ -73,9 +74,10 @@ const widthClass = computed(() => {
   <div
     :style="{ ...heightStyle, ...computedWidth }"
     :class="cn(
-      'border-r border-white/10 shadow-md flex items-center justify-center overflow-hidden relative transition-all duration-200 hover:scale-110 hover:z-20 hover:-translate-y-2 rounded-sm',
+      'border-r border-white/10 shadow-md flex items-center justify-center overflow-hidden relative transition-all duration-200 hover:scale-110 hover:z-20 hover:-translate-y-2 rounded-sm cursor-pointer',
       spineColor,
       widthClass,
+      props.highlighted ? 'ring-2 ring-cyan-400 ring-offset-2 scale-110 z-30 animate-pulse shadow-[0_0_30px_rgba(34,211,238,0.8),0_0_60px_rgba(34,211,238,0.4)]' : '',
       props.class
     )"
   >

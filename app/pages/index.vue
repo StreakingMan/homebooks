@@ -6,6 +6,7 @@ import BatchEntryDialog from '~/components/Wall/BatchEntryDialog.vue';
 import BookDetailDialog from '~/components/Wall/BookDetailDialog.vue';
 import BookGrid from '~/components/Wall/BookGrid.vue';
 import BookListSheet from '~/components/Wall/BookListSheet.vue';
+import BookPreview from '~/components/Wall/BookPreview.vue';
 import BookSpine from '~/components/Wall/BookSpine.vue';
 import ChatBar from '~/components/Wall/ChatBar.vue';
 import LedControlDialog from '~/components/Wall/LedControlDialog.vue';
@@ -27,6 +28,13 @@ const showDetailDialog = ref(false);
 const selectedCell = ref(null);
 const selectedBook = ref(null);
 const currentActiveCell = ref<{ row: number; col: number } | null>(null);
+const entryDialogActiveCell = ref<{ row: number; col: number } | null>(null);
+
+// Search matched book IDs for highlighting
+const searchMatchedBookIds = computed(() => {
+  if (!store.searchQuery) return [];
+  return store.filteredBooks.map((b) => b._id);
+});
 
 // Load data on mount
 onMounted(() => {
@@ -36,6 +44,15 @@ onMounted(() => {
 const handleEntry = (cell: any) => {
   selectedCell.value = cell;
   showEntryDialog.value = true;
+};
+
+const handleEntryOpen = () => {
+  selectedCell.value = null;
+  showEntryDialog.value = true;
+};
+
+const handleEntryHighlight = (cell: any) => {
+  entryDialogActiveCell.value = cell;
 };
 
 const handleLocate = async (cell: any) => {
@@ -72,7 +89,8 @@ const handleBookSelect = (book: any) => {
   selectedBook.value = book;
   showDetailDialog.value = true;
   if (book.position) {
-    handleLocate({ row: book.position.row, col: book.position.col });
+    // Only highlight, don't toggle LED
+    currentActiveCell.value = { row: book.position.row, col: book.position.col };
   }
 };
 
@@ -85,11 +103,16 @@ const handleSettingsSaved = () => {
   <div class="relative flex min-h-screen flex-col overflow-hidden bg-stone-100 font-sans">
     <!-- Top Bar -->
     <div class="fixed top-4 left-1/2 z-40 -translate-x-1/2">
-      <TopBar @open-led="showLedDialog = true" @open-settings="showSettingsDialog = true" @open-list="showListSheet = true" />
+      <TopBar 
+        @open-led="showLedDialog = true" 
+        @open-settings="showSettingsDialog = true" 
+        @open-list="showListSheet = true" 
+        @open-entry="handleEntryOpen"
+      />
     </div>
 
     <!-- Main Wall Area -->
-    <main class="flex h-full w-full flex-1 flex-col items-center justify-center p-4 pt-16 pb-24">
+    <main class="flex h-full w-full flex-1 flex-col items-center justify-center p-2 pt-16 pb-24">
       <div v-if="!store.config && !store.isLoading" class="flex flex-col items-center gap-4 text-center">
         <div class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-stone-200">
           <Library class="h-8 w-8 text-stone-400" />
@@ -99,7 +122,14 @@ const handleSettingsSaved = () => {
         <Button @click="showSettingsDialog = true">立即设置</Button>
       </div>
 
-      <BookGrid v-else :active-cell="currentActiveCell" @entry="handleEntry" @locate="handleLocate" />
+      <BookGrid 
+        v-else 
+        :active-cell="showEntryDialog ? entryDialogActiveCell : currentActiveCell" 
+        :highlighted-book-ids="searchMatchedBookIds"
+        @entry="handleEntry" 
+        @locate="handleLocate" 
+        @select-book="handleBookSelect"
+      />
     </main>
 
     <!-- Unplaced Books Shelf -->
@@ -111,18 +141,10 @@ const handleSettingsSaved = () => {
              class="relative group flex-shrink-0 h-32 flex items-end transition-all duration-300 hover:-translate-y-4 hover:z-40"
              @click="handleBookSelect(book)"
           >
-             <BookSpine :book="book" class="shadow-2xl border-t border-white/20" />
+             <BookSpine :book="book" :highlighted="searchMatchedBookIds.includes(book._id)" class="shadow-2xl border-t border-white/20" />
              
-             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-32 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none scale-0 group-hover:scale-100 origin-bottom">
-               <div class="bg-white p-2 rounded-lg shadow-xl border border-stone-200">
-                 <div class="aspect-[2/3] bg-stone-100 rounded-md overflow-hidden mb-2 relative shadow-inner">
-                   <img v-if="book.img" :src="book.img" class="w-full h-full object-cover" />
-                   <div v-else class="w-full h-full flex items-center justify-center text-stone-300">
-                     <Library class="w-8 h-8" />
-                   </div>
-                 </div>
-                 <div class="text-[10px] font-medium truncate text-center text-stone-600">{{ book.title }}</div>
-               </div>
+             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none scale-0 group-hover:scale-100 origin-bottom z-50">
+               <BookPreview :book="book" />
              </div>
           </div>
         </div>
@@ -134,7 +156,11 @@ const handleSettingsSaved = () => {
     </div>
 
     <!-- Dialogs -->
-    <BatchEntryDialog v-model:open="showEntryDialog" :cell="selectedCell" />
+    <BatchEntryDialog 
+      v-model:open="showEntryDialog" 
+      :cell="selectedCell" 
+      @highlight-cell="handleEntryHighlight"
+    />
     <LedControlDialog v-model:open="showLedDialog" />
     <WallSettingsDialog v-model:open="showSettingsDialog" @saved="handleSettingsSaved" />
     <BookListSheet v-model:open="showListSheet" />

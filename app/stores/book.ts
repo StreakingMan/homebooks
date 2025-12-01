@@ -86,6 +86,13 @@ export const useBookStore = defineStore('book', {
       this.books.push(book);
     },
 
+    async updateBook(book: Book) {
+      const index = this.books.findIndex((b) => b._id === book._id);
+      if (index !== -1) {
+        this.books[index] = book;
+      }
+    },
+
     async removeBook(isbn: string) {
       this.books = this.books.filter((b) => b.isbn !== isbn);
     },

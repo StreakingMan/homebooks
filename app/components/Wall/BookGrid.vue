@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BookPreview from './BookPreview.vue';
 import BookSpine from './BookSpine.vue';
 import { cn } from '@/lib/utils';
 import { ScanBarcode, Lightbulb, Loader2 } from 'lucide-vue-next';
@@ -8,9 +9,10 @@ import { useBookStore } from '~/stores/book';
 
 const props = defineProps<{
   activeCell?: { row: number; col: number } | null;
+  highlightedBookIds?: string[];
 }>();
 
-defineEmits(['entry', 'locate']);
+defineEmits(['entry', 'locate', 'select-book']);
 
 const store = useBookStore();
 
@@ -38,7 +40,7 @@ const updateSize = () => {
   if (availableW <= 0 || availableH <= 0) return;
 
   const { cols, rows } = config.value;
-  const gap = 16; // 1rem in pixels
+  const gap = 8; // 0.5rem in pixels
 
   // Calculate max cell width based on width constraint
   // availableW = cols * w + (cols - 1) * gap
@@ -81,7 +83,7 @@ const gridStyle = computed(() => {
   return {
     display: 'grid',
     gridTemplateColumns: `repeat(${config.value.cols}, minmax(0, 1fr))`,
-    gap: '1rem',
+    gap: '0.5rem',
     width: `${contentWidth.value}px`,
     height: `${contentHeight.value}px`,
   };
@@ -93,54 +95,62 @@ const gridStyle = computed(() => {
     <Loader2 class="text-muted-foreground h-8 w-8 animate-spin" />
   </div>
 
-  <div v-else-if="config" ref="containerRef" class="flex h-full w-full items-center justify-center overflow-hidden p-2">
-    <div class="rounded-xl border bg-stone-50 p-4 shadow-sm transition-all duration-300" :style="gridStyle">
+  <div v-else-if="config" ref="containerRef" class="flex h-full w-full items-center justify-center p-2">
+    <div class="rounded-xl border bg-stone-50 p-2 shadow-sm transition-all duration-300" :style="gridStyle">
       <div
         v-for="cell in cells"
         :key="cell.id"
         :class="
           cn(
-            'group relative flex aspect-[16/9] items-end overflow-hidden rounded-md border-2 border-stone-200 bg-stone-200/50 px-2 py-1 transition-all duration-300 hover:border-stone-400 hover:shadow-md',
+            'group relative flex aspect-[16/9] items-end border-2 border-stone-200 bg-stone-200/50 px-2 py-1 transition-all duration-300 hover:border-stone-400 hover:shadow-md',
             isCellActive(cell)
               ? 'z-20 scale-105 border-yellow-400 bg-yellow-50/80 shadow-[0_0_40px_rgba(250,204,21,0.6)] ring-4 ring-yellow-400/80'
               : '',
           )
         "
-        @click="$emit('locate', cell)"
       >
         <!-- Shelf shadow inner -->
         <div class="pointer-events-none absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.05)]" />
 
         <!-- Books -->
         <div class="relative z-10 flex h-full w-full items-end space-x-[1px]">
-          <BookSpine v-for="book in cell.books" :key="book._id" :book="book" />
+          <div
+            v-for="book in cell.books"
+            :key="book._id"
+            class="group/book relative flex h-full items-end"
+            @click.stop="$emit('select-book', book)"
+          >
+            <BookSpine :book="book" :highlighted="props.highlightedBookIds?.includes(book._id) || false" />
+            <div
+              class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 opacity-0 transition-opacity duration-200 group-hover/book:opacity-100"
+            >
+              <BookPreview :book="book" />
+            </div>
+          </div>
         </div>
 
-        <!-- Hover Actions Overlay -->
+        <!-- Hover Actions (Floating Top Right) -->
         <div
-          class="absolute inset-0 z-30 flex cursor-default flex-col items-center justify-center gap-3 bg-black/50 opacity-0 backdrop-blur-[2px] transition-all duration-200 group-hover:opacity-100"
+          class="absolute right-1 top-1 z-40 flex translate-y-[-6px] gap-1 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100"
         >
-          <span class="font-mono text-xs text-white/70">{{ cell.row + 1 }} - {{ cell.col + 1 }}</span>
-          <div class="flex gap-2">
-            <Button
-              size="icon"
-              variant="secondary"
-              class="hover:text-primary h-8 w-8 rounded-full hover:bg-white"
-              title="录入书籍"
-              @click.stop="$emit('entry', cell)"
-            >
-              <ScanBarcode class="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="secondary"
-              class="h-8 w-8 rounded-full hover:bg-yellow-100 hover:text-yellow-600"
-              title="灯光定位"
-              @click.stop="$emit('locate', cell)"
-            >
-              <Lightbulb class="h-4 w-4" />
-            </Button>
-          </div>
+          <Button
+            size="icon"
+            variant="secondary"
+            class="hover:text-primary h-6 w-6 rounded-full border border-stone-200 bg-white/90 shadow-md hover:bg-white"
+            title="录入书籍"
+            @click.stop="$emit('entry', cell)"
+          >
+            <ScanBarcode class="h-3 w-3" />
+          </Button>
+          <Button
+            size="icon"
+            variant="secondary"
+            class="h-6 w-6 rounded-full border border-stone-200 bg-white/90 shadow-md hover:bg-white hover:text-yellow-600"
+            title="灯光定位"
+            @click.stop="$emit('locate', cell)"
+          >
+            <Lightbulb class="h-3 w-3" />
+          </Button>
         </div>
       </div>
     </div>
