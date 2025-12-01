@@ -38,6 +38,11 @@ export const useBookStore = defineStore('book', {
       return state.books.filter((b) => b.title?.toLowerCase().includes(q) || b.author?.toLowerCase().includes(q) || b.isbn?.includes(q));
     },
 
+    // Get unplaced books (no position)
+    unplacedBooks(state) {
+      return state.books.filter((b) => !b.position);
+    },
+
     // Get grid cells with books
     cells(state) {
       if (!state.config) return [];

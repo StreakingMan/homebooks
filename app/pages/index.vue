@@ -6,6 +6,7 @@ import BatchEntryDialog from '~/components/Wall/BatchEntryDialog.vue';
 import BookDetailDialog from '~/components/Wall/BookDetailDialog.vue';
 import BookGrid from '~/components/Wall/BookGrid.vue';
 import BookListSheet from '~/components/Wall/BookListSheet.vue';
+import BookSpine from '~/components/Wall/BookSpine.vue';
 import ChatBar from '~/components/Wall/ChatBar.vue';
 import LedControlDialog from '~/components/Wall/LedControlDialog.vue';
 import TopBar from '~/components/Wall/TopBar.vue';
@@ -101,7 +102,33 @@ const handleSettingsSaved = () => {
       <BookGrid v-else :active-cell="currentActiveCell" @entry="handleEntry" @locate="handleLocate" />
     </main>
 
-    <!-- Chat Bar -->
+    <!-- Unplaced Books Shelf -->
+    <div v-if="store.unplacedBooks.length > 0" class="fixed bottom-0 left-0 w-full z-30 flex justify-start pointer-events-none pl-8">
+        <div class="w-full max-w-[90vw] flex items-end justify-start gap-[2px] overflow-x-visible pb-0 pointer-events-auto">
+          <div 
+             v-for="book in store.unplacedBooks" 
+             :key="book._id"
+             class="relative group flex-shrink-0 h-32 flex items-end transition-all duration-300 hover:-translate-y-4 hover:z-40"
+             @click="handleBookSelect(book)"
+          >
+             <BookSpine :book="book" class="shadow-2xl border-t border-white/20" />
+             
+             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-32 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none scale-0 group-hover:scale-100 origin-bottom">
+               <div class="bg-white p-2 rounded-lg shadow-xl border border-stone-200">
+                 <div class="aspect-[2/3] bg-stone-100 rounded-md overflow-hidden mb-2 relative shadow-inner">
+                   <img v-if="book.img" :src="book.img" class="w-full h-full object-cover" />
+                   <div v-else class="w-full h-full flex items-center justify-center text-stone-300">
+                     <Library class="w-8 h-8" />
+                   </div>
+                 </div>
+                 <div class="text-[10px] font-medium truncate text-center text-stone-600">{{ book.title }}</div>
+               </div>
+             </div>
+          </div>
+        </div>
+    </div>
+
+    <!-- ChatBar -->
     <div class="fixed bottom-6 left-1/2 z-50 w-full max-w-2xl -translate-x-1/2 px-4">
       <ChatBar @highlight="handleHighlight" @select="handleBookSelect" />
     </div>

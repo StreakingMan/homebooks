@@ -35,8 +35,30 @@ const spineColor = computed(() => {
   return colors[index]
 })
 
-// Random width for realistic spine look (between w-6 and w-10)
+// Random height for realistic spine look (between 85% and 100%)
+const heightStyle = computed(() => {
+   let hash = 0;
+   const str = props.book.title || 'Unknown';
+   for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+   }
+   const h = 85 + (Math.abs(hash) % 16);
+   return { height: `${h}%` }
+})
+
+// Width based on pages or random
+const computedWidth = computed(() => {
+   const pages = parseInt(String(props.book.pages || '').replace(/[^\d]/g, ''), 10);
+   if (!isNaN(pages) && pages > 0) {
+       // Map pages to pixels: min 16px, max 50px
+       const w = Math.min(Math.max(Math.floor(pages / 15), 16), 50);
+       return { width: `${w}px` };
+   }
+   return null;
+})
+
 const widthClass = computed(() => {
+   if (computedWidth.value) return '';
    const widths = ['w-6', 'w-7', 'w-8', 'w-9']
    let hash = 0;
    const str = props.book.title || 'Unknown';
@@ -49,8 +71,9 @@ const widthClass = computed(() => {
 
 <template>
   <div
+    :style="{ ...heightStyle, ...computedWidth }"
     :class="cn(
-      'h-[95%] border-r border-white/10 shadow-md flex items-center justify-center overflow-hidden relative transition-all duration-200 hover:scale-110 hover:z-20 hover:-translate-y-2 rounded-sm',
+      'border-r border-white/10 shadow-md flex items-center justify-center overflow-hidden relative transition-all duration-200 hover:scale-110 hover:z-20 hover:-translate-y-2 rounded-sm',
       spineColor,
       widthClass,
       props.class
