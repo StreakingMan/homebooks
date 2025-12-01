@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Settings, Lightbulb, BookOpen, List, ScanBarcode } from 'lucide-vue-next'
 import { Button } from '~/components/ui/button'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '~/components/ui/tooltip'
 
 defineEmits(['open-settings', 'open-led', 'open-list', 'open-entry'])
 </script>
@@ -15,49 +15,41 @@ defineEmits(['open-settings', 'open-led', 'open-list', 'open-entry'])
      
      <div class="w-[1px] h-4 bg-stone-200 mx-1"/>
 
-     <TooltipProvider>
-       <Tooltip>
-         <TooltipTrigger as-child>
-           <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full" @click="$emit('open-entry')">
-             <ScanBarcode class="w-4 h-4 text-stone-600" />
-           </Button>
-         </TooltipTrigger>
-         <TooltipContent>录入书籍</TooltipContent>
-       </Tooltip>
-     </TooltipProvider>
+     <Tooltip>
+       <TooltipTrigger as-child>
+         <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full" @click="$emit('open-entry')">
+           <ScanBarcode class="w-4 h-4 text-stone-600" />
+         </Button>
+       </TooltipTrigger>
+       <TooltipContent>录入书籍</TooltipContent>
+     </Tooltip>
 
-     <TooltipProvider>
-       <Tooltip>
-         <TooltipTrigger as-child>
-           <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full" @click="$emit('open-list')">
-             <List class="w-4 h-4 text-stone-600" />
-           </Button>
-         </TooltipTrigger>
-         <TooltipContent>书籍列表</TooltipContent>
-       </Tooltip>
-     </TooltipProvider>
+     <Tooltip>
+       <TooltipTrigger as-child>
+         <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full" @click="$emit('open-list')">
+           <List class="w-4 h-4 text-stone-600" />
+         </Button>
+       </TooltipTrigger>
+       <TooltipContent>书籍列表</TooltipContent>
+     </Tooltip>
      
-     <TooltipProvider>
-       <Tooltip>
-         <TooltipTrigger as-child>
-           <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full" @click="$emit('open-led')">
-             <Lightbulb class="w-4 h-4 text-stone-600" />
-           </Button>
-         </TooltipTrigger>
-         <TooltipContent>灯光控制</TooltipContent>
-       </Tooltip>
-     </TooltipProvider>
+     <Tooltip>
+       <TooltipTrigger as-child>
+         <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full" @click="$emit('open-led')">
+           <Lightbulb class="w-4 h-4 text-stone-600" />
+         </Button>
+       </TooltipTrigger>
+       <TooltipContent>灯光控制</TooltipContent>
+     </Tooltip>
 
-     <TooltipProvider>
-       <Tooltip>
-         <TooltipTrigger as-child>
-           <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full" @click="$emit('open-settings')">
-             <Settings class="w-4 h-4 text-stone-600" />
-           </Button>
-         </TooltipTrigger>
-         <TooltipContent>书墙设置</TooltipContent>
-       </Tooltip>
-     </TooltipProvider>
+     <Tooltip>
+       <TooltipTrigger as-child>
+         <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full" @click="$emit('open-settings')">
+           <Settings class="w-4 h-4 text-stone-600" />
+         </Button>
+       </TooltipTrigger>
+       <TooltipContent>书墙设置</TooltipContent>
+     </Tooltip>
   </div>
 </template>
 
