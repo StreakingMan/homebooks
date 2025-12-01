@@ -30,6 +30,20 @@ export default defineNuxtConfig({
     componentDir: './app/components/ui',
   },
 
+  // Nitro 服务器配置
+  nitro: {
+    // 启用详细日志（生产环境也显示）
+    logLevel: 'verbose',
+    // 生成源映射以便调试
+    sourceMap: true,
+  },
+
+  // 生产环境也保留源映射
+  sourcemap: {
+    server: true,
+    client: true,
+  },
+
   // 配置运行时环境变量（仅服务端可访问）
   // Nuxt 会自动将环境变量映射：NUXT_<CONFIG_KEY> -> runtimeConfig.<configKey>
   runtimeConfig: {
