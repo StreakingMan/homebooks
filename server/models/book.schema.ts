@@ -6,7 +6,7 @@ export const BookSchema = defineMongooseModel({
     title: String,
     img: String,
     author: String,
-    isbn: String,
+    isbn: { type: String, index: true },
     isbn10: String,
     publisher: String,
     pubdate: String,
@@ -23,5 +23,12 @@ export const BookSchema = defineMongooseModel({
     class: String,
     summary: String,
     isDeleted: { type: Boolean, required: false, select: false },
+    status: { type: String, index: true, default: 'available' }, // available, borrowed, lost
+    position: {
+      wallId: String,
+      row: Number,
+      col: Number,
+      order: Number
+    }
   },
 });

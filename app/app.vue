@@ -1,7 +1,11 @@
+<script setup lang="ts">
+import { Toaster } from '~/components/ui/sonner'
+import 'vue-sonner/style.css'
+</script>
+
 <template>
-  <UApp>
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
-  </UApp>
+  <NuxtLayout>
+    <NuxtPage />
+    <Toaster />
+  </NuxtLayout>
 </template>

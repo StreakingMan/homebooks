@@ -1,14 +1,19 @@
+import tailwindcss from '@tailwindcss/vite';
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   // 采用 Nuxt 4 默认 app/ 目录结构
-  css: ['~/assets/css/main.css'],
+  css: ['@/assets/css/tailwind.css'],
+  vite: {
+    plugins: [tailwindcss()],
+  },
   devtools: { enabled: true },
   devServer: {
     host: '0.0.0.0',
-    https: true,
+    https: false,
     port: 4000,
   },
-  modules: ['@nuxt/ui', '@nuxt/eslint', 'nuxt-mongoose'],
+  modules: ['@nuxt/eslint', 'nuxt-mongoose', '@pinia/nuxt', 'shadcn-nuxt'],
 
   eslint: {
     checker: true,
@@ -16,16 +21,12 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2024-11-27',
 
-  // 启用颜色模式功能
-  colorMode: {
-    classSuffix: '',
-    fallback: 'light', // 默认使用浅色模式
-    preference: 'system', // 优先使用系统设置
-    dataValue: 'theme', // 主题数据属性名
-    storageKey: 'book-wall-theme', // localStorage 存储键名
+  pinia: {
+    storesDirs: ['./app/stores/**'],
   },
 
-  ui: {
-    fonts: false,
+  shadcn: {
+    prefix: '',
+    componentDir: './app/components/ui',
   },
 });
