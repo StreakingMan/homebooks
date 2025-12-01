@@ -2,6 +2,7 @@ import { BookSchema } from '#imports';
 import { $fetch } from 'ofetch';
 
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig();
   const isbn = getRouterParam(event, 'isbn');
   const findBook = await BookSchema.findOneAndUpdate({ isbn }, { isDeleted: false }, { new: true });
   if (findBook) {
@@ -10,7 +11,7 @@ export default defineEventHandler(async (event) => {
     const { code, data, msg } = await $fetch('https://api.tanshuapi.com/api/isbn/v1/index', {
       method: 'get',
       params: {
-        key: process.env.TANSHUAPI_KEY,
+        key: config.tanshuapiKey,
         isbn,
       },
     });

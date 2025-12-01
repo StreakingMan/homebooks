@@ -1,7 +1,8 @@
 export default defineEventHandler(async (event) => {
-  const haUrl = process.env.HA_URL
-  const entityId = process.env.HA_LED_ENTITY_ID
-  const accessToken = process.env.HA_TOKEN
+  const config = useRuntimeConfig();
+  const haUrl = config.haUrl;
+  const entityId = config.haLedEntityId;
+  const accessToken = config.haToken;
 
   if (!haUrl || !entityId || !accessToken) {
     throw createError({
