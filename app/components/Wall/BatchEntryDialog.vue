@@ -162,7 +162,7 @@ const moveUnplaced = async () => {
     await Promise.all(tasks);
     toast.success(`已移动 ${selectedUnplacedIds.value.length} 本书`);
     selectedUnplacedIds.value = [];
-  } catch (e) {
+  } catch {
     toast.error('移动失败');
   } finally {
     isMoving.value = false;
