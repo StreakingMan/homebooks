@@ -2,6 +2,9 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  // 禁用 SSR - 家用项目无需 SEO，简化开发
+  ssr: false,
+
   // 采用 Nuxt 4 默认 app/ 目录结构
   css: ['@/assets/css/tailwind.css'],
   vite: {
