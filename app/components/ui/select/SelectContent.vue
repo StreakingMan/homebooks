@@ -8,7 +8,7 @@ import {
   SelectViewport,
   useForwardPropsEmits,
 } from "reka-ui"
-import { cn } from '@/lib/utils'
+import { cn } from "@/lib/utils"
 import { SelectScrollDownButton, SelectScrollUpButton } from "."
 
 defineOptions({
@@ -19,7 +19,6 @@ const props = withDefaults(
   defineProps<SelectContentProps & { class?: HTMLAttributes["class"] }>(),
   {
     position: "popper",
-    class: undefined
   },
 )
 const emits = defineEmits<SelectContentEmits>()

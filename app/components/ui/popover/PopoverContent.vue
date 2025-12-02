@@ -7,7 +7,7 @@ import {
   PopoverPortal,
   useForwardPropsEmits,
 } from "reka-ui"
-import { cn } from '@/lib/utils'
+import { cn } from "@/lib/utils"
 
 defineOptions({
   inheritAttrs: false,
@@ -18,7 +18,6 @@ const props = withDefaults(
   {
     align: "center",
     sideOffset: 4,
-    class: undefined
   },
 )
 const emits = defineEmits<PopoverContentEmits>()

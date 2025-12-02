@@ -6,7 +6,6 @@ import BatchEntryDialog from '~/components/Wall/BatchEntryDialog.vue';
 import BookDetailDialog from '~/components/Wall/BookDetailDialog.vue';
 import BookGrid from '~/components/Wall/BookGrid.vue';
 import BookListSheet from '~/components/Wall/BookListSheet.vue';
-import BookPreview from '~/components/Wall/BookPreview.vue';
 import BookSpine from '~/components/Wall/BookSpine.vue';
 import ChatBar from '~/components/Wall/ChatBar.vue';
 import LedControlDialog from '~/components/Wall/LedControlDialog.vue';
@@ -138,14 +137,14 @@ const handleSettingsSaved = () => {
           <div 
              v-for="book in store.unplacedBooks" 
              :key="book._id"
-             class="relative group flex-shrink-0 h-32 flex items-end transition-all duration-300 hover:-translate-y-4 hover:z-40"
-             @click="handleBookSelect(book)"
+             class="flex-shrink-0 h-32 flex items-end"
           >
-             <BookSpine :book="book" :highlighted="searchMatchedBookIds.includes(book._id)" class="shadow-2xl border-t border-white/20" />
-             
-             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none scale-0 group-hover:scale-100 origin-bottom z-50">
-               <BookPreview :book="book" />
-             </div>
+             <BookSpine 
+               :book="book" 
+               :highlighted="searchMatchedBookIds.includes(book._id)" 
+               class="shadow-2xl border-t border-white/20" 
+               @click="handleBookSelect(book)"
+             />
           </div>
         </div>
     </div>

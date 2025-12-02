@@ -3,7 +3,7 @@ import type { PrimitiveProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"
 import type { ButtonVariants } from "."
 import { Primitive } from "reka-ui"
-import { cn } from '@/lib/utils'
+import { cn } from "@/lib/utils"
 import { buttonVariants } from "."
 
 interface Props extends PrimitiveProps {
@@ -14,9 +14,6 @@ interface Props extends PrimitiveProps {
 
 const props = withDefaults(defineProps<Props>(), {
   as: "button",
-  variant: "default",
-  size: "default",
-  class: undefined,
 })
 </script>
 

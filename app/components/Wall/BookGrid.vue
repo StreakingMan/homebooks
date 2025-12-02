@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import BookPreview from './BookPreview.vue';
 import BookSpine from './BookSpine.vue';
 import { cn } from '@/lib/utils';
 import { ScanBarcode, Lightbulb, Loader2 } from 'lucide-vue-next';
@@ -114,19 +113,13 @@ const gridStyle = computed(() => {
 
         <!-- Books -->
         <div class="relative z-10 flex h-full w-full items-end space-x-[1px]">
-          <div
+          <BookSpine 
             v-for="book in cell.books"
             :key="book._id"
-            class="group/book relative flex h-full items-end"
+            :book="book" 
+            :highlighted="props.highlightedBookIds?.includes(book._id) || false" 
             @click.stop="$emit('select-book', book)"
-          >
-            <BookSpine :book="book" :highlighted="props.highlightedBookIds?.includes(book._id) || false" />
-            <div
-              class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 opacity-0 transition-opacity duration-200 group-hover/book:opacity-100"
-            >
-              <BookPreview :book="book" />
-            </div>
-          </div>
+          />
         </div>
 
         <!-- Hover Actions (Floating Top Right) -->
