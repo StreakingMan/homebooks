@@ -102,10 +102,10 @@ const handleSettingsSaved = () => {
   <div class="relative flex min-h-screen flex-col overflow-hidden bg-stone-100 font-sans">
     <!-- Top Bar -->
     <div class="fixed top-4 left-1/2 z-40 -translate-x-1/2">
-      <TopBar 
-        @open-led="showLedDialog = true" 
-        @open-settings="showSettingsDialog = true" 
-        @open-list="showListSheet = true" 
+      <TopBar
+        @open-led="showLedDialog = true"
+        @open-settings="showSettingsDialog = true"
+        @open-list="showListSheet = true"
         @open-entry="handleEntryOpen"
       />
     </div>
@@ -121,32 +121,28 @@ const handleSettingsSaved = () => {
         <Button @click="showSettingsDialog = true">立即设置</Button>
       </div>
 
-      <BookGrid 
-        v-else 
-        :active-cell="showEntryDialog ? entryDialogActiveCell : currentActiveCell" 
+      <BookGrid
+        v-else
+        :active-cell="showEntryDialog ? entryDialogActiveCell : currentActiveCell"
         :highlighted-book-ids="searchMatchedBookIds"
-        @entry="handleEntry" 
-        @locate="handleLocate" 
+        @entry="handleEntry"
+        @locate="handleLocate"
         @select-book="handleBookSelect"
       />
     </main>
 
     <!-- Unplaced Books Shelf -->
-    <div v-if="store.unplacedBooks.length > 0" class="fixed bottom-0 left-0 w-full z-30 flex justify-start pointer-events-none pl-8">
-        <div class="w-full max-w-[90vw] flex items-end justify-start gap-[2px] overflow-x-visible pb-0 pointer-events-auto">
-          <div 
-             v-for="book in store.unplacedBooks" 
-             :key="book._id"
-             class="flex-shrink-0 h-32 flex items-end"
-          >
-             <BookSpine 
-               :book="book" 
-               :highlighted="searchMatchedBookIds.includes(book._id)" 
-               class="shadow-2xl border-t border-white/20" 
-               @click="handleBookSelect(book)"
-             />
-          </div>
+    <div v-if="store.unplacedBooks.length > 0" class="pointer-events-none fixed bottom-0 left-0 z-30 flex w-full justify-start pl-8">
+      <div class="pointer-events-auto flex w-full max-w-[90vw] items-end justify-start gap-[2px] overflow-x-visible pb-0">
+        <div v-for="book in store.unplacedBooks" :key="book._id" class="flex h-32 flex-shrink-0 items-end">
+          <BookSpine
+            :book="book"
+            :highlighted="searchMatchedBookIds.includes(book._id)"
+            class="border-t border-white/20 shadow-2xl"
+            @click="handleBookSelect(book)"
+          />
         </div>
+      </div>
     </div>
 
     <!-- ChatBar -->
@@ -155,11 +151,7 @@ const handleSettingsSaved = () => {
     </div>
 
     <!-- Dialogs -->
-    <BatchEntryDialog 
-      v-model:open="showEntryDialog" 
-      :cell="selectedCell" 
-      @highlight-cell="handleEntryHighlight"
-    />
+    <BatchEntryDialog v-model:open="showEntryDialog" :cell="selectedCell" @highlight-cell="handleEntryHighlight" />
     <LedControlDialog v-model:open="showLedDialog" />
     <WallSettingsDialog v-model:open="showSettingsDialog" @saved="handleSettingsSaved" />
     <BookListSheet v-model:open="showListSheet" />

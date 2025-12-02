@@ -4,8 +4,8 @@ import { ref, watch, computed } from 'vue';
 import { toast } from 'vue-sonner';
 import { Button } from '~/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '~/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
 import { Input } from '~/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
 import { useBookStore } from '~/stores/book';
 
 const props = defineProps<{
@@ -62,7 +62,7 @@ watch(
     } else {
       emit('highlight-cell', null);
     }
-  }
+  },
 );
 
 watch(targetCell, (newCell) => {
@@ -144,7 +144,7 @@ const moveUnplaced = async () => {
     const tasks = selectedUnplacedIds.value.map((id) => {
       const book = store.books.find((b) => b._id === id);
       if (!book) return Promise.resolve();
-      
+
       return $fetch('/api/books/update', {
         method: 'POST',
         body: {
@@ -190,13 +190,7 @@ const handleComplete = () => {
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium text-stone-700">目标格口</span>
             <div class="flex gap-1">
-              <Button
-                size="icon"
-                variant="outline"
-                class="h-7 w-7"
-                :disabled="!targetCell || targetCell.row <= 0"
-                @click="move(-1, 0)"
-              >
+              <Button size="icon" variant="outline" class="h-7 w-7" :disabled="!targetCell || targetCell.row <= 0" @click="move(-1, 0)">
                 <ArrowUp class="h-4 w-4" />
               </Button>
               <Button
@@ -208,13 +202,7 @@ const handleComplete = () => {
               >
                 <ArrowDown class="h-4 w-4" />
               </Button>
-              <Button
-                size="icon"
-                variant="outline"
-                class="h-7 w-7"
-                :disabled="!targetCell || targetCell.col <= 0"
-                @click="move(0, -1)"
-              >
+              <Button size="icon" variant="outline" class="h-7 w-7" :disabled="!targetCell || targetCell.col <= 0" @click="move(0, -1)">
                 <ArrowLeft class="h-4 w-4" />
               </Button>
               <Button
@@ -299,11 +287,7 @@ const handleComplete = () => {
         <!-- Recent List -->
         <div v-if="recentBooks.length > 0" class="max-h-40 overflow-y-auto rounded-md border bg-stone-50">
           <div class="text-muted-foreground border-b p-2 text-xs font-medium">本次录入记录</div>
-          <div
-            v-for="book in recentBooks"
-            :key="book._id"
-            class="flex items-center gap-3 border-b bg-white p-2 text-sm last:border-0"
-          >
+          <div v-for="book in recentBooks" :key="book._id" class="flex items-center gap-3 border-b bg-white p-2 text-sm last:border-0">
             <div class="h-10 w-8 flex-shrink-0 overflow-hidden rounded border bg-stone-200">
               <img v-if="book.img" :src="book.img" class="h-full w-full object-cover" />
             </div>

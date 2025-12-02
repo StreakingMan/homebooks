@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
@@ -17,9 +18,10 @@
   },
   "lint-staged": {
     "*.{js,ts,vue}": [
+      "prettier --write",
       "eslint --fix"
     ],
-    "*.{json,md,yml,yaml}": [
+    "*.{json,md,yml,yaml,css,scss,html}": [
       "prettier --write"
     ]
   },

@@ -22,4 +22,3 @@ export default defineNitroPlugin((nitroApp) => {
     event.context.startTime = Date.now();
   });
 });
-

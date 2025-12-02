@@ -113,18 +113,18 @@ const gridStyle = computed(() => {
 
         <!-- Books -->
         <div class="relative z-10 flex h-full w-full items-end space-x-[1px]">
-          <BookSpine 
+          <BookSpine
             v-for="book in cell.books"
             :key="book._id"
-            :book="book" 
-            :highlighted="props.highlightedBookIds?.includes(book._id) || false" 
+            :book="book"
+            :highlighted="props.highlightedBookIds?.includes(book._id) || false"
             @click.stop="$emit('select-book', book)"
           />
         </div>
 
         <!-- Hover Actions (Floating Top Right) -->
         <div
-          class="absolute right-1 top-1 z-40 flex translate-y-[-6px] gap-1 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100"
+          class="absolute top-1 right-1 z-40 flex translate-y-[-6px] gap-1 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100"
         >
           <Button
             size="icon"

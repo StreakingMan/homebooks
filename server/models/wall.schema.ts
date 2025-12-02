@@ -6,7 +6,6 @@ export const WallSchema = defineMongooseModel({
     name: { type: String, default: 'Default Wall' },
     rows: { type: Number, default: 7 },
     cols: { type: Number, default: 8 },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
   },
 });
-

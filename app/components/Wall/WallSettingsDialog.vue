@@ -1,49 +1,52 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '~/components/ui/dialog'
-import { Input } from '~/components/ui/input'
-import { Button } from '~/components/ui/button'
-import { toast } from 'vue-sonner'
+import { ref, watch, onMounted } from 'vue';
+import { toast } from 'vue-sonner';
+import { Button } from '~/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '~/components/ui/dialog';
+import { Input } from '~/components/ui/input';
 
-const props = defineProps<{ open: boolean }>()
-const emit = defineEmits(['update:open', 'saved'])
+const props = defineProps<{ open: boolean }>();
+const emit = defineEmits(['update:open', 'saved']);
 
-const form = ref({ name: '', rows: 7, cols: 8 })
+const form = ref({ name: '', rows: 7, cols: 8 });
 
 const fetchConfig = async () => {
   try {
-    const res: any = await $fetch('/api/wall/config')
+    const res: any = await $fetch('/api/wall/config');
     if (res.config) {
-      form.value = { 
+      form.value = {
         name: res.config.name,
         rows: res.config.rows,
-        cols: res.config.cols
-      }
+        cols: res.config.cols,
+      };
     }
   } catch (e) {
-    console.error(e)
+    console.error(e);
   }
-}
+};
 
-watch(() => props.open, (val) => {
-  if (val) fetchConfig()
-})
+watch(
+  () => props.open,
+  (val) => {
+    if (val) fetchConfig();
+  },
+);
 
-onMounted(fetchConfig)
+onMounted(fetchConfig);
 
 const save = async () => {
   try {
     await $fetch('/api/wall/config', {
       method: 'POST',
-      body: form.value
-    })
-    toast.success('设置已保存')
-    emit('saved')
-    emit('update:open', false)
+      body: form.value,
+    });
+    toast.success('设置已保存');
+    emit('saved');
+    emit('update:open', false);
   } catch {
-    toast.error('保存失败')
+    toast.error('保存失败');
   }
-}
+};
 </script>
 
 <template>
@@ -53,7 +56,7 @@ const save = async () => {
         <DialogTitle>书墙设置</DialogTitle>
         <DialogDescription>配置书墙的基本信息和布局尺寸。</DialogDescription>
       </DialogHeader>
-      
+
       <div class="grid gap-4 py-4">
         <div class="grid grid-cols-4 items-center gap-4">
           <label class="text-right text-sm font-medium">名称</label>
@@ -76,4 +79,3 @@ const save = async () => {
     </DialogContent>
   </Dialog>
 </template>
-

@@ -28,7 +28,7 @@ export const BookSchema = defineMongooseModel({
       wallId: String,
       row: Number,
       col: Number,
-      order: Number
-    }
+      order: Number,
+    },
   },
 });

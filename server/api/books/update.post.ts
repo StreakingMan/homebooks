@@ -14,14 +14,14 @@ export default defineEventHandler(async (event) => {
   try {
     const book = await BookSchema.findByIdAndUpdate(
       id,
-      { 
-        $set: { 
+      {
+        $set: {
           position: position,
-          // If position is set, status is available (or whatever logic). 
+          // If position is set, status is available (or whatever logic).
           // If position is removed, maybe unplaced?
-        } 
+        },
       },
-      { new: true }
+      { new: true },
     );
 
     if (!book) {
@@ -43,4 +43,3 @@ export default defineEventHandler(async (event) => {
     });
   }
 });
-
