@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Loader2, Check, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-vue-next';
-import { ref, watch, computed } from 'vue';
+import { Loader2, Check, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ScanBarcode, Keyboard } from 'lucide-vue-next';
+import { ref, watch, computed, onUnmounted, nextTick } from 'vue';
 import { toast } from 'vue-sonner';
 import { Button } from '~/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '~/components/ui/dialog';
@@ -16,9 +16,114 @@ const props = defineProps<{
 const emit = defineEmits(['update:open', 'book-added', 'highlight-cell']);
 
 const store = useBookStore();
-const isbnInput = ref('');
 const isProcessing = ref(false);
 const recentBooks = ref<any[]>([]);
+
+// 录入模式：'scanner' 扫码枪 | 'manual' 手动输入
+const inputMode = ref<'scanner' | 'manual'>('scanner');
+
+// 手动输入模式
+const manualInput = ref('');
+const manualInputRef = ref<InstanceType<typeof Input> | null>(null);
+
+const focusManualInput = () => {
+  nextTick(() => {
+    const inputEl = manualInputRef.value?.$el?.querySelector('input') || manualInputRef.value?.$el;
+    inputEl?.focus();
+  });
+};
+
+const handleManualScan = () => {
+  const isbn = manualInput.value.trim();
+  if (isbn) {
+    handleScan(isbn);
+    manualInput.value = '';
+    focusManualInput();
+  }
+};
+
+// 切换模式
+const toggleMode = () => {
+  if (inputMode.value === 'scanner') {
+    inputMode.value = 'manual';
+    stopListening();
+    setTimeout(focusManualInput, 100);
+  } else {
+    inputMode.value = 'scanner';
+    manualInput.value = '';
+    startListening();
+  }
+};
+
+// 扫码缓冲区
+const scanBuffer = ref('');
+const scanTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
+const SCAN_TIMEOUT_MS = 100; // 扫码枪输入间隔通常很短，100ms 内无输入则清空
+
+// 清空扫码缓冲区
+const clearScanBuffer = () => {
+  scanBuffer.value = '';
+  if (scanTimeout.value) {
+    clearTimeout(scanTimeout.value);
+    scanTimeout.value = null;
+  }
+};
+
+// 重置超时
+const resetScanTimeout = () => {
+  if (scanTimeout.value) {
+    clearTimeout(scanTimeout.value);
+  }
+  scanTimeout.value = setTimeout(clearScanBuffer, SCAN_TIMEOUT_MS);
+};
+
+// 全局键盘事件处理
+const handleKeyDown = (e: KeyboardEvent) => {
+  // 如果正在处理中，忽略输入
+  if (isProcessing.value) return;
+
+  // 忽略组合键
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  // 如果焦点在输入框或下拉框中，不处理（让原生行为生效）
+  const activeEl = document.activeElement;
+  const tagName = activeEl?.tagName?.toLowerCase();
+  if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+    return;
+  }
+
+  // Enter 键 - 触发扫描
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (scanBuffer.value.trim()) {
+      handleScan(scanBuffer.value.trim());
+      clearScanBuffer();
+    }
+    return;
+  }
+
+  // 可打印字符 - 添加到缓冲区
+  if (e.key.length === 1) {
+    e.preventDefault();
+    scanBuffer.value += e.key;
+    resetScanTimeout();
+  }
+};
+
+// 添加/移除键盘监听
+const startListening = () => {
+  document.addEventListener('keydown', handleKeyDown);
+};
+
+const stopListening = () => {
+  document.removeEventListener('keydown', handleKeyDown);
+  clearScanBuffer();
+};
+
+// 组件卸载时清理
+onUnmounted(() => {
+  stopListening();
+});
 
 // Target Cell State
 const selectedRow = ref<string>('');
@@ -50,7 +155,8 @@ watch(
   (newVal) => {
     if (newVal) {
       recentBooks.value = [];
-      isbnInput.value = '';
+      clearScanBuffer();
+      manualInput.value = '';
       selectedUnplacedIds.value = [];
       if (props.cell) {
         selectedRow.value = String(props.cell.row);
@@ -59,7 +165,15 @@ watch(
         selectedRow.value = '';
         selectedCol.value = '';
       }
+      // 根据模式启动
+      if (inputMode.value === 'scanner') {
+        startListening();
+      } else {
+        setTimeout(focusManualInput, 100);
+      }
     } else {
+      // 停止监听
+      stopListening();
       emit('highlight-cell', null);
     }
   },
@@ -92,13 +206,8 @@ const move = (dRow: number, dCol: number) => {
   selectedCol.value = String(newCol);
 };
 
-const handleScan = async () => {
-  const isbn = isbnInput.value.trim();
+const handleScan = async (isbn: string) => {
   if (!isbn) return;
-  if (!targetCell.value) {
-    toast.error('请先选择格口位置');
-    return;
-  }
 
   isProcessing.value = true;
   try {
@@ -118,18 +227,19 @@ const handleScan = async () => {
           summary: bookData.summary,
           price: bookData.price,
         },
-        position: { row: targetCell.value.row, col: targetCell.value.col },
+        // 有格口则放入格口，否则放入待整理区
+        position: targetCell.value ? { row: targetCell.value.row, col: targetCell.value.col } : null,
       },
     });
 
     if (createRes.success) {
-      toast.success(`已录入: ${createRes.book.title}`);
+      const location = targetCell.value ? `${targetCell.value.row + 1}-${targetCell.value.col + 1}` : '待整理区';
+      toast.success(`已录入: ${createRes.book.title} → ${location}`);
       recentBooks.value.unshift(createRes.book);
       store.addBook(createRes.book);
-      isbnInput.value = '';
     }
   } catch (e) {
-    toast.error('录入失败或未找到书籍');
+    toast.error(`录入失败: ${isbn}`);
     console.error(e);
   } finally {
     isProcessing.value = false;
@@ -269,19 +379,66 @@ const handleComplete = () => {
           </div>
         </div>
 
-        <div class="flex gap-2">
-          <Input
-            v-model="isbnInput"
-            placeholder="请扫描ISBN或手动输入..."
-            :disabled="isProcessing || !targetCell"
-            autofocus
-            class="flex-1"
-            @keydown.enter="handleScan"
-          />
-          <Button :disabled="isProcessing || !targetCell" @click="handleScan">
-            <Loader2 v-if="isProcessing" class="h-4 w-4 animate-spin" />
-            <span v-else>录入</span>
-          </Button>
+        <!-- 录入区域 -->
+        <div class="flex flex-col gap-2">
+          <!-- 模式切换 -->
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-stone-500">录入方式</span>
+            <Button size="sm" variant="ghost" class="h-7 gap-1.5 text-xs" @click="toggleMode">
+              <ScanBarcode v-if="inputMode === 'manual'" class="h-3.5 w-3.5" />
+              <Keyboard v-else class="h-3.5 w-3.5" />
+              {{ inputMode === 'scanner' ? '切换手动输入' : '切换扫码枪' }}
+            </Button>
+          </div>
+
+          <!-- 扫码枪模式 -->
+          <div
+            v-if="inputMode === 'scanner'"
+            class="flex items-center gap-3 rounded-lg border-2 border-dashed p-4 transition-colors"
+            :class="[isProcessing ? 'border-amber-400 bg-amber-50' : 'border-green-400 bg-green-50']"
+          >
+            <div class="flex h-10 w-10 items-center justify-center rounded-full" :class="[isProcessing ? 'bg-amber-100' : 'bg-green-100']">
+              <Loader2 v-if="isProcessing" class="h-5 w-5 animate-spin text-amber-600" />
+              <ScanBarcode v-else class="h-5 w-5 text-green-600" />
+            </div>
+            <div class="flex-1">
+              <div class="text-sm font-medium" :class="[isProcessing ? 'text-amber-700' : 'text-green-700']">
+                {{ isProcessing ? '正在录入...' : '扫码枪就绪' }}
+              </div>
+              <div class="font-mono text-xs text-stone-500">
+                {{ scanBuffer || '等待扫描...' }}
+              </div>
+            </div>
+            <div class="text-right text-xs text-stone-500">
+              <div class="font-medium">目标位置</div>
+              <div :class="[targetCell ? 'text-green-600' : 'text-amber-600']">
+                {{ targetCell ? `${targetCell.row + 1}-${targetCell.col + 1}` : '待整理区' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 手动输入模式 -->
+          <div v-else class="flex flex-col gap-2">
+            <div class="flex gap-2">
+              <Input
+                ref="manualInputRef"
+                v-model="manualInput"
+                placeholder="请输入ISBN..."
+                :disabled="isProcessing"
+                class="flex-1"
+                @keydown.enter="handleManualScan"
+              />
+              <Button :disabled="isProcessing || !manualInput.trim()" @click="handleManualScan">
+                <Loader2 v-if="isProcessing" class="h-4 w-4 animate-spin" />
+                <span v-else>录入</span>
+              </Button>
+            </div>
+            <div class="text-xs text-stone-500">
+              目标位置：<span :class="[targetCell ? 'text-green-600' : 'text-amber-600']">{{
+                targetCell ? `${targetCell.row + 1}-${targetCell.col + 1}` : '待整理区'
+              }}</span>
+            </div>
+          </div>
         </div>
 
         <!-- Recent List -->
