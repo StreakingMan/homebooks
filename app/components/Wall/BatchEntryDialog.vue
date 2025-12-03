@@ -79,6 +79,9 @@ const resetScanTimeout = () => {
 
 // 全局键盘事件处理
 const handleKeyDown = (e: KeyboardEvent) => {
+  // 安全检查：确保对话框是打开状态（防止监听器未正确移除时继续捕获输入）
+  if (!props.open) return;
+
   // 如果正在处理中，忽略输入
   if (isProcessing.value) return;
 
