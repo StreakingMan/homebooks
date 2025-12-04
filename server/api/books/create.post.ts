@@ -25,11 +25,11 @@ export default defineEventHandler(async (event) => {
           const existingInCell = await BookSchema.countDocuments({
             'position.row': position.row,
             'position.col': position.col,
-            _id: { $ne: existingBook._id },
             isDeleted: { $ne: true },
           });
 
           existingBook.position = {
+            ...existingBook.position,
             ...position,
             order: existingInCell,
           };
