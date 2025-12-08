@@ -93,6 +93,49 @@ export async function callDeepSeek(options: ChatOptions): Promise<ChatResponse> 
 }
 
 /**
+ * 流式调用DeepSeek Chat API
+ * 返回原始的 fetch Response 以便进行流式处理
+ */
+export async function callDeepSeekStream(options: ChatOptions): Promise<Response> {
+  const config = useRuntimeConfig();
+  const apiKey = config.deepseekApiKey;
+
+  if (!apiKey) {
+    throw createError({
+      statusCode: 500,
+      message: 'DeepSeek API Key not configured',
+    });
+  }
+
+  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      messages: options.messages,
+      tools: options.tools,
+      temperature: options.temperature ?? 0.7,
+      max_tokens: options.max_tokens ?? 2000,
+      stream: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error('DeepSeek Stream API调用失败:', error);
+    throw createError({
+      statusCode: response.status,
+      message: `AI服务调用失败: ${error}`,
+    });
+  }
+
+  return response;
+}
+
+/**
  * 获取文本的Embedding向量
  * 使用硅基流动的OpenAI兼容API
  */

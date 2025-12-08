@@ -215,6 +215,7 @@ async function queryBooks(args: { keyword?: string; author_region?: 'domestic' |
       isbn: book.isbn,
       publisher: book.publisher,
       pubdate: book.pubdate,
+      img: book.img, // 封面图片
       summary: book.summary?.substring(0, 150), // 仅返回摘要前150字
       position: book.position,
     })),
@@ -339,6 +340,7 @@ async function findBookLocation(args: { title?: string; isbn?: string }) {
       title: book.title,
       author: book.author,
       isbn: book.isbn,
+      img: book.img,
       position: book.position
         ? {
             row: book.position.row + 1, // 转为1-based显示
@@ -382,6 +384,7 @@ async function semanticSearchBooks(args: { query: string; limit?: number }) {
         title: vr.title,
         author: vr.author,
         isbn: vr.isbn,
+        img: book?.img,
         similarity: Math.round(vr.similarity * 100), // 转为百分比
         summary_preview: vr.summary_preview,
         publisher: book?.publisher,
@@ -467,10 +470,12 @@ async function findSimilarBooks(args: { title?: string; isbn?: string; limit?: n
         title: vr.title,
         author: vr.author,
         isbn: vr.isbn,
+        img: book?.img,
         similarity: Math.round(vr.similarity * 100),
         summary_preview: vr.summary_preview,
         publisher: book?.publisher,
         pubdate: book?.pubdate,
+        position: book?.position,
       };
     });
 

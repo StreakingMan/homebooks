@@ -116,13 +116,39 @@ export async function addBooksToVectorStore(
   const metadatas: any[] = [];
   const embeddings: number[][] = [];
 
-  // 构建批量数据
-  for (const book of booksWithSummary) {
+  // 延迟函数，避免触发 API 频率限制
+  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // 带重试的 embedding 获取
+  const getEmbeddingWithRetry = async (text: string, maxRetries = 3): Promise<number[]> => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await getEmbedding(text);
+      } catch (error: any) {
+        const is429or403 =
+          error?.statusCode === 429 || error?.statusCode === 403 || error?.message?.includes('403') || error?.message?.includes('429');
+
+        if (is429or403 && attempt < maxRetries) {
+          // 触发频率限制，等待后重试
+          const waitTime = attempt * 2000; // 2s, 4s, 6s
+          console.log(`  ⏳ 触发频率限制，等待 ${waitTime / 1000}s 后重试 (${attempt}/${maxRetries})...`);
+          await delay(waitTime);
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw new Error('重试次数已用尽');
+  };
+
+  // 构建批量数据，每个请求之间添加间隔
+  for (let i = 0; i < booksWithSummary.length; i++) {
+    const book = booksWithSummary[i];
     const textForEmbedding = [book.title, book.author || '', book.summary || ''].filter(Boolean).join(' ');
 
     // 使用硅基流动API生成向量
     try {
-      const embedding = await getEmbedding(textForEmbedding);
+      const embedding = await getEmbeddingWithRetry(textForEmbedding);
 
       ids.push(book.isbn);
       documents.push(book.summary || '');
@@ -134,9 +160,14 @@ export async function addBooksToVectorStore(
         summary_preview: (book.summary || '').substring(0, 150),
       });
 
-      console.log(`  ✓ ${book.title}`);
+      console.log(`  ✓ [${i + 1}/${booksWithSummary.length}] ${book.title}`);
+
+      // 每个请求后等待 200ms，避免触发频率限制
+      if (i < booksWithSummary.length - 1) {
+        await delay(200);
+      }
     } catch (error) {
-      console.error(`  ✗ ${book.title}:`, error);
+      console.error(`  ✗ [${i + 1}/${booksWithSummary.length}] ${book.title}:`, error);
       // 出错时跳过这本书
     }
   }
