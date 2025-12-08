@@ -2,14 +2,15 @@
 import { Library } from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
 import { toast } from 'vue-sonner';
+import AiChat from '~/components/AiChat/index.vue';
 import BatchEntryDialog from '~/components/Wall/BatchEntryDialog.vue';
 import BookDetailDialog from '~/components/Wall/BookDetailDialog.vue';
 import BookGrid from '~/components/Wall/BookGrid.vue';
 import BookListSheet from '~/components/Wall/BookListSheet.vue';
 import BookSpine from '~/components/Wall/BookSpine.vue';
-import ChatBar from '~/components/Wall/ChatBar.vue';
 import LedControlDialog from '~/components/Wall/LedControlDialog.vue';
 import TopBar from '~/components/Wall/TopBar.vue';
+import VectorSyncDialog from '~/components/Wall/VectorSyncDialog.vue';
 import WallSettingsDialog from '~/components/Wall/WallSettingsDialog.vue';
 import { Button } from '~/components/ui/button';
 import { useBookStore } from '~/stores/book';
@@ -22,18 +23,13 @@ const showLedDialog = ref(false);
 const showSettingsDialog = ref(false);
 const showListSheet = ref(false);
 const showDetailDialog = ref(false);
+const showSyncDialog = ref(false);
 
 // Selection state
 const selectedCell = ref(null);
 const selectedBook = ref(null);
 const currentActiveCell = ref<{ row: number; col: number } | null>(null);
 const entryDialogActiveCell = ref<{ row: number; col: number } | null>(null);
-
-// Search matched book IDs for highlighting
-const searchMatchedBookIds = computed(() => {
-  if (!store.searchQuery) return [];
-  return store.filteredBooks.map((b) => b._id);
-});
 
 // Load data on mount
 onMounted(() => {
@@ -107,6 +103,7 @@ const handleSettingsSaved = () => {
         @open-settings="showSettingsDialog = true"
         @open-list="showListSheet = true"
         @open-entry="handleEntryOpen"
+        @open-sync="showSyncDialog = true"
       />
     </div>
 
@@ -124,7 +121,6 @@ const handleSettingsSaved = () => {
       <BookGrid
         v-else
         :active-cell="showEntryDialog ? entryDialogActiveCell : currentActiveCell"
-        :highlighted-book-ids="searchMatchedBookIds"
         @entry="handleEntry"
         @locate="handleLocate"
         @select-book="handleBookSelect"
@@ -135,20 +131,13 @@ const handleSettingsSaved = () => {
     <div v-if="store.unplacedBooks.length > 0" class="pointer-events-none fixed bottom-0 left-0 z-30 flex w-full justify-start pl-8">
       <div class="pointer-events-auto flex w-full max-w-[90vw] items-end justify-start gap-[2px] overflow-x-visible pb-0">
         <div v-for="book in store.unplacedBooks" :key="book._id" class="flex h-32 flex-shrink-0 items-end">
-          <BookSpine
-            :book="book"
-            :highlighted="searchMatchedBookIds.includes(book._id)"
-            class="border-t border-white/20 shadow-2xl"
-            @click="handleBookSelect(book)"
-          />
+          <BookSpine :book="book" class="border-t border-white/20 shadow-2xl" @click="handleBookSelect(book)" />
         </div>
       </div>
     </div>
 
-    <!-- ChatBar -->
-    <div class="fixed bottom-6 left-1/2 z-50 w-full max-w-2xl -translate-x-1/2 px-4">
-      <ChatBar @highlight="handleHighlight" @select="handleBookSelect" />
-    </div>
+    <!-- AI Chat -->
+    <AiChat @highlight="handleHighlight" @select-book="handleBookSelect" />
 
     <!-- Dialogs -->
     <BatchEntryDialog v-model:open="showEntryDialog" :cell="selectedCell" @highlight-cell="handleEntryHighlight" />
@@ -156,5 +145,6 @@ const handleSettingsSaved = () => {
     <WallSettingsDialog v-model:open="showSettingsDialog" @saved="handleSettingsSaved" />
     <BookListSheet v-model:open="showListSheet" />
     <BookDetailDialog v-model:open="showDetailDialog" :book="selectedBook" />
+    <VectorSyncDialog v-model:open="showSyncDialog" />
   </div>
 </template>

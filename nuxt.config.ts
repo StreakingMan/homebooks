@@ -56,5 +56,10 @@ export default defineNuxtConfig({
     haToken: process.env.NUXT_HA_TOKEN || '',
     haUrl: process.env.NUXT_HA_URL || '',
     haLedEntityId: process.env.NUXT_HA_LED_ENTITY_ID || '',
+    // AI 服务配置
+    deepseekApiKey: process.env.NUXT_DEEPSEEK_API_KEY || '',
+    siliconflowApiKey: process.env.NUXT_SILICONFLOW_API_KEY || '',
+    // ChromaDB 向量数据库地址
+    chromaUrl: process.env.NUXT_CHROMA_URL || '',
   },
 });

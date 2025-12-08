@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Settings, Lightbulb, BookOpen, List, ScanBarcode } from 'lucide-vue-next';
+import { Settings, Lightbulb, BookOpen, List, ScanBarcode, DatabaseZap } from 'lucide-vue-next';
 import { Button } from '~/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '~/components/ui/tooltip';
 
-defineEmits(['open-settings', 'open-led', 'open-list', 'open-entry']);
+defineEmits(['open-settings', 'open-led', 'open-list', 'open-entry', 'open-sync']);
 </script>
 
 <template>
@@ -40,6 +40,15 @@ defineEmits(['open-settings', 'open-led', 'open-list', 'open-entry']);
         </Button>
       </TooltipTrigger>
       <TooltipContent>灯光控制</TooltipContent>
+    </Tooltip>
+
+    <Tooltip>
+      <TooltipTrigger as-child>
+        <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full" @click="$emit('open-sync')">
+          <DatabaseZap class="h-4 w-4 text-stone-600" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>向量库同步</TooltipContent>
     </Tooltip>
 
     <Tooltip>
