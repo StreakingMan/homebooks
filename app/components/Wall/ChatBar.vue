@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AIChatDialog from './AIChatDialog.vue';
 import { Search, Sparkles, MapPin } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { useBookStore } from '~/stores/book';
@@ -11,6 +12,7 @@ const emit = defineEmits(['update:modelValue', 'highlight', 'select']);
 
 const store = useBookStore();
 const showResults = ref(false);
+const showAIChat = ref(false);
 
 // Sync store search query
 const searchQuery = computed({
@@ -109,10 +111,14 @@ const handleSelect = (book: any) => {
       <div class="mx-3 h-6 w-[1px] bg-stone-200" />
       <button
         class="rounded-full p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-purple-600"
-        title="AI助手 (Coming Soon)"
+        title="AI智能助手"
+        @click="showAIChat = true"
       >
         <Sparkles class="h-5 w-5" />
       </button>
     </div>
+
+    <!-- AI Chat Dialog -->
+    <AIChatDialog v-model:open="showAIChat" />
   </div>
 </template>

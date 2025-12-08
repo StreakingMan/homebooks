@@ -1,4 +1,5 @@
 import { BookSchema } from '#imports';
+import { addBookToVectorStore } from '../../utils/vector-store';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -63,6 +64,19 @@ export default defineEventHandler(async (event) => {
       position: newPosition,
       status: 'available',
     });
+
+    // 🔥 自动向量化（异步执行，不影响主流程）
+    if (newBook.summary) {
+      addBookToVectorStore({
+        isbn: newBook.isbn,
+        title: newBook.title,
+        author: newBook.author,
+        summary: newBook.summary,
+      }).catch((_error) => {
+        console.error('自动向量化失败:', _error);
+        // 不抛出错误，不影响主流程
+      });
+    }
 
     return {
       success: true,
