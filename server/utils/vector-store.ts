@@ -18,10 +18,14 @@ export async function initVectorStore(): Promise<Collection> {
     return collection;
   }
 
+  // 从环境变量获取 ChromaDB 地址，默认 localhost:8000
+  const config = useRuntimeConfig();
+  const chromaUrl = config.chromaUrl || '';
+
   try {
     // 连接到运行的Chroma服务器
     client = new ChromaClient({
-      path: 'http://localhost:8000',
+      path: chromaUrl,
     });
 
     // 获取或创建集合
@@ -31,7 +35,7 @@ export async function initVectorStore(): Promise<Collection> {
       metadata: { 'hnsw:space': 'cosine' }, // 使用余弦相似度
     });
 
-    console.log(`✅ 向量数据库已初始化: ${COLLECTION_NAME} (Qwen3-Embedding-8B)`);
+    console.log(`✅ 向量数据库已初始化: ${COLLECTION_NAME} @ ${chromaUrl}`);
     return collection;
   } catch (error: any) {
     console.error('❌ 向量数据库初始化失败:', error.message || error);

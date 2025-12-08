@@ -59,5 +59,7 @@ export default defineNuxtConfig({
     // AI 服务配置
     deepseekApiKey: process.env.NUXT_DEEPSEEK_API_KEY || '',
     siliconflowApiKey: process.env.NUXT_SILICONFLOW_API_KEY || '',
+    // ChromaDB 向量数据库地址
+    chromaUrl: process.env.NUXT_CHROMA_URL || '',
   },
 });
