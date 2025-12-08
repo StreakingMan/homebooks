@@ -10,6 +10,7 @@ import BookSpine from '~/components/Wall/BookSpine.vue';
 import ChatBar from '~/components/Wall/ChatBar.vue';
 import LedControlDialog from '~/components/Wall/LedControlDialog.vue';
 import TopBar from '~/components/Wall/TopBar.vue';
+import VectorSyncDialog from '~/components/Wall/VectorSyncDialog.vue';
 import WallSettingsDialog from '~/components/Wall/WallSettingsDialog.vue';
 import { Button } from '~/components/ui/button';
 import { useBookStore } from '~/stores/book';
@@ -22,6 +23,7 @@ const showLedDialog = ref(false);
 const showSettingsDialog = ref(false);
 const showListSheet = ref(false);
 const showDetailDialog = ref(false);
+const showSyncDialog = ref(false);
 
 // Selection state
 const selectedCell = ref(null);
@@ -107,6 +109,7 @@ const handleSettingsSaved = () => {
         @open-settings="showSettingsDialog = true"
         @open-list="showListSheet = true"
         @open-entry="handleEntryOpen"
+        @open-sync="showSyncDialog = true"
       />
     </div>
 
@@ -156,5 +159,6 @@ const handleSettingsSaved = () => {
     <WallSettingsDialog v-model:open="showSettingsDialog" @saved="handleSettingsSaved" />
     <BookListSheet v-model:open="showListSheet" />
     <BookDetailDialog v-model:open="showDetailDialog" :book="selectedBook" />
+    <VectorSyncDialog v-model:open="showSyncDialog" />
   </div>
 </template>
