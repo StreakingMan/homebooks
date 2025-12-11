@@ -1,5 +1,5 @@
 import { Viewport } from 'pixi-viewport';
-import { Application, Container, Graphics, Text, TextStyle, type FederatedPointerEvent } from 'pixi.js';
+import { Application, Container, Graphics, Sprite, Text, TextStyle, Texture, type FederatedPointerEvent } from 'pixi.js';
 import { ref, watch, onUnmounted, type Ref } from 'vue';
 
 // Types
@@ -137,16 +137,73 @@ export function usePixiBookWall(containerRef: Ref<HTMLElement | null>, options: 
     cellHeight.value = (cellWidth.value * 9) / 16;
   }
 
-  // Create a book spine sprite
+  // Animation state for each book sprite
+  interface BookAnimationState {
+    targetScale: number;
+    targetY: number;
+    isHovered: boolean;
+    popoverProgress: number; // 0 = hidden, 1 = fully visible
+    targetPopover: number;
+  }
+
+  // Load image via proxy and return Texture for PixiJS
+  async function loadImageTexture(url: string): Promise<Texture | null> {
+    if (!url) return null;
+    try {
+      const proxyUrl = url.startsWith('/') || url.startsWith('data:') ? url : `/api/proxy/image?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      if (!response.ok) return null;
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const texture = Texture.from(img);
+          URL.revokeObjectURL(blobUrl);
+          resolve(texture);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(blobUrl);
+          resolve(null);
+        };
+        img.src = blobUrl;
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  // Create a book spine sprite with popover cover effect
   function createBookSprite(book: Book, maxHeight: number): Container {
     const container = new Container();
-    container.eventMode = 'static';
-    container.cursor = 'pointer';
+    container.eventMode = 'passive'; // Container doesn't handle events
 
     const width = getSpineWidth(book);
     const heightPercent = getSpineHeightPercent(book.title);
     const height = (maxHeight * heightPercent) / 100;
     const color = getSpineColor(book.title);
+
+    // Cover dimensions (popover size)
+    const coverWidth = Math.max(width * 3, 80);
+    const coverHeight = height * 1.2;
+
+    // Animation state
+    const animState: BookAnimationState = {
+      targetScale: 1,
+      targetY: 0,
+      isHovered: false,
+      popoverProgress: 0,
+      targetPopover: 0,
+    };
+    const animSpeed = 0.12;
+    const popoverSpeed = 0.18;
+
+    // === Spine Container (handles events) ===
+    const spineContainer = new Container();
+    spineContainer.eventMode = 'static';
+    spineContainer.cursor = 'pointer';
 
     // Main spine rectangle
     const spine = new Graphics();
@@ -162,22 +219,115 @@ export function usePixiBookWall(containerRef: Ref<HTMLElement | null>, options: 
     decoBottom.rect(0, height - 16, width, 1);
     decoBottom.fill({ color: 0xffffff, alpha: 0.2 });
 
-    // Title text (vertical)
-    const style = new TextStyle({
-      fontFamily: 'serif',
-      fontSize: 10,
+    // Title text - vertical Chinese (each character on new line)
+    const titleText = book.title || 'Unknown';
+    const maxChars = Math.floor((height - 20) / 14);
+    const displayTitle = titleText.length > maxChars ? titleText.slice(0, maxChars - 1) + '…' : titleText;
+    const verticalTitle = displayTitle.split('').join('\n');
+
+    const titleStyle = new TextStyle({
+      fontFamily: '"Noto Serif SC", "Source Han Serif CN", serif',
+      fontSize: 12,
       fill: 0xffffff,
-      wordWrap: true,
-      wordWrapWidth: height - 20,
+      align: 'center',
+      lineHeight: 14,
     });
 
-    const title = new Text({ text: book.title || 'Unknown', style });
-    title.rotation = Math.PI / 2;
-    title.x = width / 2 + 5;
+    const title = new Text({ text: verticalTitle, style: titleStyle });
+    title.resolution = 2; // High resolution for sharp text
+    title.anchor.set(0.5, 0);
+    title.x = width / 2;
     title.y = 10;
     title.alpha = 0.9;
 
-    container.addChild(spine, decoTop, decoBottom, title);
+    spineContainer.addChild(spine, decoTop, decoBottom, title);
+
+    // === Popover Cover Container (appears on hover) ===
+    const popoverContainer = new Container();
+    popoverContainer.eventMode = 'none'; // Don't intercept events
+    popoverContainer.alpha = 0;
+    popoverContainer.scale.set(0.8);
+    popoverContainer.x = width / 2 - coverWidth / 2;
+    popoverContainer.y = -coverHeight - 10;
+
+    // Shadow
+    const shadow = new Graphics();
+    shadow.roundRect(4, 4, coverWidth, coverHeight, 6);
+    shadow.fill({ color: 0x000000, alpha: 0.3 });
+    popoverContainer.addChild(shadow);
+
+    // Cover background
+    const coverBg = new Graphics();
+    coverBg.roundRect(0, 0, coverWidth, coverHeight, 6);
+    coverBg.fill(0x2a2a2a);
+    coverBg.roundRect(0, 0, coverWidth, coverHeight, 6);
+    coverBg.stroke({ color: 0x444444, width: 1 });
+    popoverContainer.addChild(coverBg);
+
+    // Loading text
+    const loadingText = new Text({
+      text: '...',
+      style: new TextStyle({ fontFamily: 'sans-serif', fontSize: 14, fill: 0x666666 }),
+    });
+    loadingText.anchor.set(0.5, 0.5);
+    loadingText.x = coverWidth / 2;
+    loadingText.y = coverHeight / 2;
+    popoverContainer.addChild(loadingText);
+
+    // Load cover image
+    if (book.img) {
+      loadImageTexture(book.img)
+        .then((texture) => {
+          if (!texture || !texture.width || !texture.height) {
+            popoverContainer.removeChild(loadingText);
+            showFallbackTitle();
+            return;
+          }
+          popoverContainer.removeChild(loadingText);
+          const coverSprite = new Sprite(texture);
+          const imgAspect = texture.width / texture.height;
+          const coverAspect = (coverWidth - 8) / (coverHeight - 8);
+          if (imgAspect > coverAspect) {
+            coverSprite.width = coverWidth - 8;
+            coverSprite.height = (coverWidth - 8) / imgAspect;
+          } else {
+            coverSprite.height = coverHeight - 8;
+            coverSprite.width = (coverHeight - 8) * imgAspect;
+          }
+          coverSprite.x = (coverWidth - coverSprite.width) / 2;
+          coverSprite.y = (coverHeight - coverSprite.height) / 2;
+          popoverContainer.addChild(coverSprite);
+        })
+        .catch(() => {
+          popoverContainer.removeChild(loadingText);
+          showFallbackTitle();
+        });
+    } else {
+      popoverContainer.removeChild(loadingText);
+      showFallbackTitle();
+    }
+
+    function showFallbackTitle() {
+      const coverTitle = new Text({
+        text: titleText,
+        style: new TextStyle({
+          fontFamily: '"Noto Serif SC", serif',
+          fontSize: 12,
+          fill: 0xcccccc,
+          wordWrap: true,
+          wordWrapWidth: coverWidth - 16,
+          align: 'center',
+        }),
+      });
+      coverTitle.resolution = 2;
+      coverTitle.anchor.set(0.5, 0.5);
+      coverTitle.x = coverWidth / 2;
+      coverTitle.y = coverHeight / 2;
+      popoverContainer.addChild(coverTitle);
+    }
+
+    // Add to container
+    container.addChild(spineContainer, popoverContainer);
 
     // Position from bottom
     container.pivot.y = height;
@@ -186,30 +336,76 @@ export function usePixiBookWall(containerRef: Ref<HTMLElement | null>, options: 
     (container as any).bookData = book;
     (container as any).originalWidth = width;
     (container as any).originalHeight = height;
+    (container as any).animState = animState;
+
+    // Animation ticker callback
+    const tickerCallback = () => {
+      // Smooth scale animation
+      const scaleDiff = animState.targetScale - spineContainer.scale.x;
+      if (Math.abs(scaleDiff) > 0.001) {
+        spineContainer.scale.set(spineContainer.scale.x + scaleDiff * animSpeed);
+      }
+
+      // Smooth Y position animation
+      const currentTargetY = animState.isHovered ? -8 : 0;
+      const yDiff = currentTargetY - animState.targetY;
+      if (Math.abs(yDiff) > 0.1) {
+        animState.targetY += yDiff * animSpeed;
+        const baseY = (container as any)._baseY || container.y;
+        if (!(container as any)._baseY) (container as any)._baseY = container.y;
+        container.y = baseY + animState.targetY;
+      }
+
+      // Popover animation (scale + opacity)
+      const popoverDiff = animState.targetPopover - animState.popoverProgress;
+      if (Math.abs(popoverDiff) > 0.01) {
+        animState.popoverProgress += popoverDiff * popoverSpeed;
+        const eased = 1 - Math.pow(1 - animState.popoverProgress, 3);
+        popoverContainer.alpha = eased;
+        popoverContainer.scale.set(0.8 + 0.2 * eased);
+        popoverContainer.y = -coverHeight - 10 + (1 - eased) * 15;
+      }
+    };
+
+    // Register ticker
+    if (app) {
+      app.ticker.add(tickerCallback);
+      (container as any)._tickerCallback = tickerCallback;
+    }
 
     // Click handler
-    container.on('pointerdown', (e: FederatedPointerEvent) => {
+    spineContainer.on('pointerdown', (e: FederatedPointerEvent) => {
       if (e.button === 0) {
         startDrag(container, book, e);
       }
     });
 
-    // Hover effects
-    container.on('pointerover', () => {
+    // Hover effects - show popover
+    spineContainer.on('pointerover', () => {
       if (!draggedBook) {
-        container.scale.set(1.1);
-        container.y -= 10;
+        animState.isHovered = true;
+        animState.targetScale = 1.05;
+        animState.targetPopover = 1;
       }
     });
 
-    container.on('pointerout', () => {
+    spineContainer.on('pointerout', () => {
       if (!draggedBook || draggedBook.sprite !== container) {
-        container.scale.set(1);
-        container.y += 10;
+        animState.isHovered = false;
+        animState.targetScale = 1;
+        animState.targetPopover = 0;
       }
     });
 
     return container;
+  }
+
+  // Cleanup ticker callback when book sprite is removed
+  function cleanupBookSprite(sprite: Container) {
+    const callback = (sprite as any)._tickerCallback;
+    if (callback && app) {
+      app.ticker.remove(callback);
+    }
   }
 
   // Start dragging a book
@@ -483,6 +679,10 @@ export function usePixiBookWall(containerRef: Ref<HTMLElement | null>, options: 
   function renderBooks() {
     if (!booksContainer || !config.value) return;
 
+    // Cleanup old book sprites (remove ticker callbacks)
+    for (const child of booksContainer.children) {
+      cleanupBookSprite(child as Container);
+    }
     booksContainer.removeChildren();
 
     for (const cell of cells.value) {
