@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { Library } from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
-import { toast } from 'vue-sonner';
 import AiChat from '~/components/AiChat/index.vue';
 import BatchEntryDialog from '~/components/Wall/BatchEntryDialog.vue';
 import BookDetailDialog from '~/components/Wall/BookDetailDialog.vue';
-import BookGrid from '~/components/Wall/BookGrid.vue';
 import BookListSheet from '~/components/Wall/BookListSheet.vue';
 import BookSpine from '~/components/Wall/BookSpine.vue';
+import BookWallCanvas from '~/components/Wall/BookWallCanvas.vue';
 import LedControlDialog from '~/components/Wall/LedControlDialog.vue';
 import TopBar from '~/components/Wall/TopBar.vue';
 import VectorSyncDialog from '~/components/Wall/VectorSyncDialog.vue';
@@ -36,11 +35,6 @@ onMounted(() => {
   store.fetchAll();
 });
 
-const handleEntry = (cell: any) => {
-  selectedCell.value = cell;
-  showEntryDialog.value = true;
-};
-
 const handleEntryOpen = () => {
   selectedCell.value = null;
   showEntryDialog.value = true;
@@ -48,28 +42,6 @@ const handleEntryOpen = () => {
 
 const handleEntryHighlight = (cell: any) => {
   entryDialogActiveCell.value = cell;
-};
-
-const handleLocate = async (cell: any) => {
-  if (currentActiveCell.value && currentActiveCell.value.row === cell.row && currentActiveCell.value.col === cell.col) {
-    currentActiveCell.value = null;
-  } else {
-    currentActiveCell.value = { row: cell.row, col: cell.col };
-
-    try {
-      await $fetch('/api/led/control', {
-        method: 'POST',
-        body: {
-          action: 'locate',
-          params: { row: cell.row, col: cell.col },
-        },
-      });
-      toast.success(`已定位: ${cell.row + 1}-${cell.col + 1}`);
-    } catch (e) {
-      console.error('Failed to locate', e);
-      toast.error('灯光定位失败');
-    }
-  }
 };
 
 const handleHighlight = (pos: any) => {
@@ -107,9 +79,9 @@ const handleSettingsSaved = () => {
       />
     </div>
 
-    <!-- Main Wall Area -->
-    <main class="flex h-full w-full flex-1 flex-col items-center justify-center p-2 pt-16 pb-24">
-      <div v-if="!store.config && !store.isLoading" class="flex flex-col items-center gap-4 text-center">
+    <!-- Empty State -->
+    <main v-if="!store.config && !store.isLoading" class="flex min-h-screen items-center justify-center">
+      <div class="flex flex-col items-center gap-4 text-center">
         <div class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-stone-200">
           <Library class="h-8 w-8 text-stone-400" />
         </div>
@@ -117,15 +89,10 @@ const handleSettingsSaved = () => {
         <p class="max-w-xs text-sm text-stone-500">请先设置书墙的行列数和名称，以便开始管理您的书籍。</p>
         <Button @click="showSettingsDialog = true">立即设置</Button>
       </div>
-
-      <BookGrid
-        v-else
-        :active-cell="showEntryDialog ? entryDialogActiveCell : currentActiveCell"
-        @entry="handleEntry"
-        @locate="handleLocate"
-        @select-book="handleBookSelect"
-      />
     </main>
+
+    <!-- Fullscreen Book Wall Canvas -->
+    <BookWallCanvas v-else @select-book="handleBookSelect" />
 
     <!-- Unplaced Books Shelf -->
     <div v-if="store.unplacedBooks.length > 0" class="pointer-events-none fixed bottom-0 left-0 z-30 flex w-full justify-start pl-8">

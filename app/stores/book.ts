@@ -100,5 +100,50 @@ export const useBookStore = defineStore('book', {
     setSearchQuery(query: string) {
       this.searchQuery = query;
     },
+
+    async updateBookPosition(bookId: string, newPosition: { row: number; col: number; order: number }) {
+      const book = this.books.find((b) => b._id === bookId);
+      if (!book) return;
+
+      const oldPosition = book.position;
+
+      // Optimistically update local state
+      book.position = {
+        row: newPosition.row,
+        col: newPosition.col,
+        order: newPosition.order,
+      };
+
+      // Reorder books in the target cell
+      const targetCellBooks = this.books
+        .filter((b) => b.position && b.position.row === newPosition.row && b.position.col === newPosition.col)
+        .sort((a, b) => (a.position?.order || 0) - (b.position?.order || 0));
+
+      // Update order values
+      targetCellBooks.forEach((b, index) => {
+        if (b._id === bookId) {
+          b.position!.order = newPosition.order;
+        } else if (index >= newPosition.order) {
+          b.position!.order = index + 1;
+        } else {
+          b.position!.order = index;
+        }
+      });
+
+      // Persist to server
+      try {
+        await $fetch('/api/books/update', {
+          method: 'POST',
+          body: {
+            id: book._id,
+            position: book.position,
+          },
+        });
+      } catch (e) {
+        // Rollback on error
+        console.error('Failed to update book position', e);
+        book.position = oldPosition;
+      }
+    },
   },
 });
